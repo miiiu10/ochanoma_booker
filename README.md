@@ -2,8 +2,8 @@
 ![kirin](https://user-images.githubusercontent.com/98066319/197503841-260f7b0f-f6e1-45f8-9e44-e05778bf8ac3.gif)
 
 ## 概要
-研究室のお茶室のスケジュールを管理するSlackアプリです。
-現在はお茶の間が消失したため、621の会議室のスケジュールを管理しています。
+研究室のお茶室のスケジュールを管理するSlackアプリです。  
+現在はお茶の間が消失したため、621の会議室のスケジュールを管理しています。  
 [ここ] (https://calendar.google.com/calendar/u/0?cid=Y19uNzNwbGVzZWtxYXRzanU2aDFjcTFibjJhc0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t)からGoogle Calendar上でもスケジュールの確認・削除ができます。
 
 ## 導入方法
