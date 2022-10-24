@@ -4,8 +4,8 @@
 ## 概要
 研究室のお茶室のスケジュールを管理するSlackアプリです。  
 現在はお茶の間が消失したため、621の会議室のスケジュールを管理しています。  
-[ここ][calendar]からGoogle Calendar上でもスケジュールの確認・削除ができます。
-[calendar]: https://calendar.google.com/calendar/u/0?cid=Y19uNzNwbGVzZWtxYXRzanU2aDFjcTFibjJhc0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t
+Google Calendar上でもスケジュールの確認・削除ができます。
+
 ## 導入方法
 slackのAppから"OchanomaBooker"を選択します。
 
