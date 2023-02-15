@@ -106,7 +106,7 @@ def schedule2txt(schedules):
         for s in schedules:
             start_dt = str2datetime(s['StartTime'])
             end_dt = str2datetime(s['EndTime'])
-            txt += 'ID: {}\nTime: {}:{} ~ {}:{}\nUser: {}\n------------------------------------------------------\n'.format(s['ID'], start_dt.hour, start_dt.minute, end_dt.hour, end_dt.minute, s['Summary'])
+            txt += 'ID: {}\nTime: {} {}:{:02} ~ {}:{:02}\nUser: {}\n------------------------------------------------------\n'.format(s['ID'], start_dt.date(), start_dt.hour, start_dt.minute, end_dt.hour, end_dt.minute, s['Summary'])
     else:
         txt = 'No upcoming events found.'
     return txt
