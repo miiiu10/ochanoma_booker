@@ -64,7 +64,7 @@ def view_home(user):
                             #"initial_time": "00:00",
                             "placeholder": {
                                 "type": "plain_text",
-                                "text": "Select start time"
+                                "text": "Select end time"
                             },
                             "action_id": "timepick"
                         },
