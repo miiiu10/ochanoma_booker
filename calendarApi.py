@@ -8,6 +8,8 @@ from google.auth import load_credentials_from_file
 from googleapiclient.discovery import build
 from calendarData import CalendarData
 
+
+
 class CalendarApi():
     def __init__(self):
         config = ConfigParser()
@@ -68,14 +70,14 @@ class CalendarApi():
 
         return events
 
-    def check_calendar(self):
-        now = datetime.datetime.now(datetime.timezone.utc)
-        nextDay = now + datetime.timedelta(days=1)
-        timeMax = datetime.datetime(nextDay.year, nextDay.month, nextDay.day, 23, 59, tzinfo=datetime.timezone.utc)
+    def check_calendar(self, start_time):
+        checkDay = start_time
+        timeMin = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 0, 0, tzinfo=datetime.timezone.utc)
+        timeMax = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 23, 59, tzinfo=datetime.timezone.utc)
 
         events_result = self.service.events().list(
             calendarId=self.calendarId,
-            timeMin=now.isoformat(),
+            timeMin=timeMin.isoformat(),
             timeMax=timeMax.isoformat(),
             singleEvents=True,
             orderBy='startTime'

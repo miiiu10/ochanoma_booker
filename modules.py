@@ -10,7 +10,7 @@ from views import view_schedule, view_duplicate, view_delete_fail
 
 from calendarApi import CalendarApi
 from calendarData import CalendarBody, CalendarData
-from calendarFunc import insert, get, delete, search_from_name, cheack_calendar
+from calendarFunc import insert, get, delete, search_from_name, check_calendar
 
 def manage_info(user, add, date='2022-08-15', start_time='00:00', end_time='00:01', description='', event_id=''):
     df = pd.read_csv('iiclab_member.csv')
@@ -45,9 +45,10 @@ def manage_info(user, add, date='2022-08-15', start_time='00:00', end_time='00:0
         e_calData.summary = '{}'.format(name)
         e_calData.description = description
 
-        schedules = cheack_calendar()
         s_dt_add = datetime.datetime(year, month, day, s_hour, s_minute)
         e_dt_add = datetime.datetime(year, month, day, e_hour, e_minute)
+        schedules = check_calendar(s_dt_add)
+
         if schedules:
             for s in schedules:
                 start_dt = str2datetime(s['StartTime'])
@@ -106,7 +107,7 @@ def schedule2txt(schedules):
         for s in schedules:
             start_dt = str2datetime(s['StartTime'])
             end_dt = str2datetime(s['EndTime'])
-            txt += 'ID: {}\nTime: {} {}:{:02} ~ {}:{:02}\nUser: {}\n------------------------------------------------------\n'.format(s['ID'], start_dt.date(), start_dt.hour, start_dt.minute, end_dt.hour, end_dt.minute, s['Summary'])
+            txt += 'ID: {}\nTime: {}:{} ~ {}:{}\nUser: {}\n------------------------------------------------------\n'.format(s['ID'], start_dt.hour, start_dt.minute, end_dt.hour, end_dt.minute, s['Summary'])
     else:
         txt = 'No upcoming events found.'
     return txt

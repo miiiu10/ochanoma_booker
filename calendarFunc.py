@@ -14,10 +14,10 @@ def insert(calData1, calData2):
     except Exception as e:
         print(e)
 
-def cheack_calendar():
+def check_calendar(start_time):
     calendar = CalendarApi()
     try:
-        result = calendar.check_calendar()
+        result = calendar.check_calendar(start_time)
         if result == []:
             print('No upcoming events found.')
         else:
