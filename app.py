@@ -7,7 +7,7 @@ from configparser import ConfigParser
 import logging
 
 from slack_sdk import WebClient
-from slack_bolt import App
+from slack_bolt import App, Ack
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 #CHANNEL_ID = "#apptest"
@@ -17,8 +17,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), 'json'))
 #from blocks import block_other
-from views import view_delete_fail, view_duplicate, view_home, view_check, view_schedule
-from modules import manage_info, schedule2txt, delete_from_chat
+from views import view_delete_fail, view_duplicate, view_home, view_check, view_schedule, view_cancel
+from modules import manage_info, schedule2txt, delete_from_chat, schedule2list
 from calendarFunc import insert, get, delete
 
 config = ConfigParser()
@@ -152,9 +152,55 @@ def action_member(ack, body, client):
 @app.action("check_home")
 def action_member(ack, body, client):
     ack()
+    user_id = body['user']['id']
+    user_schedule_list = schedule2list(user_id, get())
     client.views_open(
         trigger_id=body["trigger_id"],
-        view=view_check(schedule2txt(get()))
+        # view=view_check(schedule2txt(get()))
+        view=view_cancel(user_id, user_schedule_list)
+    )
+
+# view.callback_id にマッチングする（正規表現も可能）
+@app.view("view_cancel_delete")
+def handle_view_cancel_events(ack: Ack, view: dict, client: WebClient):
+    # TODO: 正しく取得できるか確認
+    event_id = view["state"]["values"]["selected_schedule"]["action_id"]["static_select-action"]
+    # まず「処理中...」である旨を伝えます
+    ack(
+        response_action="update",
+        view={
+            "type": "modal",
+            "callback_id": "modal-id",
+            "title": {"type": "plain_text", "text":"Schedules :eyes:"},
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "処理中です... このモーダルを閉じずにしばらくお待ちください :bow:",
+                    },
+                }
+            ],
+        },
+    )
+
+    delete(event_id)
+
+    # 結果を待った後 views.update API を非同期で呼び出して再度更新をかけます
+    client.views_update(
+        view_id=view.get("id"),
+        view={
+            "type": "modal",
+            # "callback_id": "modal-id",
+            "title": {"type": "plain_text", "text":"Schedules :eyes:"},
+            "close": {"type": "plain_text", "text": "閉じる"},
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {"type": "plain_text", "text": "正常に完了しました！"},
+                }
+            ],
+        },
     )
 
 # Start your app

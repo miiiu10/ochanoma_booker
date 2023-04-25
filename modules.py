@@ -113,6 +113,31 @@ def schedule2txt(schedules):
         txt = 'No upcoming events found.'
     return txt
 
+def schedule2list(user_id, schedules):
+    "ユーザーIDに紐づくイベントをBoltのOption objectのリストで返す"
+    user_schedule_list = []
+    user_name = id2name(user_id)
+    for schedule in schedules:
+        start_dt = str2datetime(schedule['StartTime'])
+        end_dt = str2datetime(schedule['EndTime'])
+        if user_name == schedule["Summary"]:
+            user_schedule_list.append(
+                {
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"{start_dt.month}/{start_dt.day} {start_dt.hour}:{start_dt.minute:02} ~ {end_dt.hour}:{end_dt.minute:02}",
+                    },
+                    "value": schedule['ID']
+                }
+            )
+    return user_schedule_list
+
+def id2name(id):
+    df = pd.read_csv('iiclab_member.csv')
+    _df = df[df['id'] == id]
+    name = _df['name'].unique()[0]
+    return name
+
 def str2datetime(str):
     date, time = str.split('T')
     time = time.split('+')[0][:-3]

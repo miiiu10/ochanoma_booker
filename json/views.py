@@ -216,6 +216,52 @@ def view_check(calendar_info):
 
     return view
 
+def view_cancel(user_id, user_schedule_list):
+    if len(user_schedule_list) == 0:
+        return {
+            "type": "modal",
+            "title": {"type": "plain_text", "text":"Schedules :eyes:"},
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "No upcoming events found."
+                    }
+                },
+            ]
+        }
+    
+    view = {
+            "type": "modal",
+            "callback_id": "view_cancel_delete",
+            "title": {"type": "plain_text", "text":"Schedules :eyes:"},
+            "submit": {"type": "plain_text", "text": "送信"},
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": (f"The list of <@{user_id}>'s schedules at the tea room is shown below. :memo:\n"
+                                 "This list is based on the data collected by this bot, and may be different from the actual state:exclamation:")}
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "input",
+                    "block_id": "selected_schedule",
+                    "element": {
+                        "type": "static_select",
+                        "options": user_schedule_list,
+                        "action_id": "static_select-action",
+                    }
+                }
+            ]
+        }
+
+    return view
+
 def view_duplicate(user):
     view = {
         "type": "modal",
