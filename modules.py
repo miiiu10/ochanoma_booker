@@ -102,16 +102,47 @@ def delete_from_chat(user, date, time):
 
 
 def schedule2txt(schedules):
-    txt=''
+    txt_list = []
     if schedules:
         for s in schedules:
             start_dt = str2datetime(s['StartTime'])
             end_dt = str2datetime(s['EndTime'])
             #txt += 'ID: {}\nTime: {}/{} {}:{:02} ~ {}/{} {}:{:02}\nUser: {}\n------------------------------------------------------\n'.format(s['ID'], start_dt.month, start_dt.day, start_dt.hour, start_dt.minute, end_dt.month, end_dt.day, end_dt.hour, end_dt.minute, s['Summary'])
-            txt += 'ID: {}\nTime: {}/{} {}:{:02} ~ {}:{:02}\nUser: {}\n------------------------------------------------------\n'.format(s['ID'], start_dt.month, start_dt.day, start_dt.hour, start_dt.minute, end_dt.hour, end_dt.minute, s['Summary'])
-    else:
-        txt = 'No upcoming events found.'
-    return txt
+            txt_list.append(f'Time: {start_dt.month}/{start_dt.day} {start_dt.hour}:{start_dt.minute:02} ~ {end_dt.hour}:{end_dt.minute:02}\nUser: <@{name2id(s["Summary"])}>')
+    # else:
+        # txt = 'No upcoming events found.'
+    return txt_list
+
+def schedule2list(user_id, schedules):
+    "ユーザーIDに紐づくイベントをBoltのOption objectのリストで返す"
+    user_schedule_list = []
+    user_name = id2name(user_id)
+    for schedule in schedules:
+        start_dt = str2datetime(schedule['StartTime'])
+        end_dt = str2datetime(schedule['EndTime'])
+        if user_name == schedule["Summary"]:
+            user_schedule_list.append(
+                {
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"{start_dt.month}/{start_dt.day} {start_dt.hour}:{start_dt.minute:02} ~ {end_dt.hour}:{end_dt.minute:02}",
+                    },
+                    "value": schedule['ID']
+                }
+            )
+    return user_schedule_list
+
+def id2name(id):
+    df = pd.read_csv('iiclab_member.csv')
+    _df = df[df['id'] == id]
+    name = _df['name'].unique()[0]
+    return name
+
+def name2id(name):
+    df = pd.read_csv('iiclab_member.csv')
+    _df = df[df['name'] == name]
+    id = _df['id'].unique()[0]
+    return id
 
 def str2datetime(str):
     date, time = str.split('T')

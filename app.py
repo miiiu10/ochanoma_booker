@@ -7,7 +7,7 @@ from configparser import ConfigParser
 import logging
 
 from slack_sdk import WebClient
-from slack_bolt import App
+from slack_bolt import App, Ack
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 #CHANNEL_ID = "#apptest"
@@ -17,8 +17,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), 'json'))
 #from blocks import block_other
-from views import view_delete_fail, view_duplicate, view_home, view_check, view_schedule
-from modules import manage_info, schedule2txt, delete_from_chat
+from views import view_delete_fail, view_duplicate, view_home, view_check, view_schedule, view_cancel
+from modules import manage_info, schedule2txt, delete_from_chat, schedule2list
 from calendarFunc import insert, get, delete
 
 config = ConfigParser()
@@ -48,6 +48,7 @@ def update_home_tab(client, event, logger):
     except Exception as e:
         logger.error(f"Error publishing home tab: {e}")
 
+
 # Listens to incoming messages that contain "hello"
 @app.message("hello")
 def message_hello(message, say):
@@ -73,6 +74,7 @@ def action_button_click(body, ack, say):
     ack()
     say(f"<@{body['user']['id']}> clicked the button")
 
+
 @app.action("add_home")
 def handle_some_action(ack, body, client):
     ack()
@@ -86,8 +88,8 @@ def handle_some_action(ack, body, client):
         end_time = "{:02}:{:02}".format(start_hour+1, start_minute)
     description = body['view']['state']['values']['textblock']['description']['value']
 
-    check_frag = manage_info(user, add=True, date=date, start_time=start_time, end_time=end_time, description=description)
-    if check_frag:
+    check_flag = manage_info(user, add=True, date=date, start_time=start_time, end_time=end_time, description=description)
+    if check_flag:
         schedules = get()
         ui = view_schedule(schedule2txt(schedules))
         client.chat_postMessage(
@@ -122,13 +124,14 @@ def action_button_click(body, ack, say):
         # メッセージから時間を取得
         # チャットへのメッセージを変更したらここも変更
         text = body['message']['text']
-        date, time = text.split()
-        date = date[-10:]   # 2022-02-23
-        time = time[:11]    # 12:00~14:30
+        splited_text = list(text.split())
+        # TODO: 正規表現を用いる
+        date_str = splited_text[0][-10:]  # 2022-02-23
+        time_str = splited_text[1][:11]    # 12:00~14:30
 
-        check_frag = delete_from_chat(click_user, date, time)
-        if check_frag:
-            say(f"<@{body['user']['id']}> が予約を消しました。")
+        check_flag = delete_from_chat(click_user, date_str, time_str)
+        if check_flag:
+            say(f"<@{body['user']['id']}> が予約を取り消しました。")
 
     else:
         say("他の人の予約は消せません。")
@@ -136,17 +139,10 @@ def action_button_click(body, ack, say):
 @app.action("delete_home")
 def action_member(ack, body, client):
     ack()
-    user = body['user']['id']
-    id = body['view']['state']['values']['deleteblock']['delete_id']['value']
-    check_frag = manage_info(user, add=False, event_id=id)
-    if check_frag:
-        schedules = get()
-        ui = view_schedule(schedule2txt(schedules))
-    else:
-        ui = view_delete_fail(user)
+    user_id = body['user']['id']
     client.views_open(
         trigger_id=body["trigger_id"],
-        view=ui
+        view=view_cancel(user_id, schedule2list(user_id, get()))
     )
 
 @app.action("check_home")
@@ -155,6 +151,30 @@ def action_member(ack, body, client):
     client.views_open(
         trigger_id=body["trigger_id"],
         view=view_check(schedule2txt(get()))
+    )
+
+@app.view("view_cancel_delete")
+def handle_view_events(ack, body, logger):
+    event_id = body["view"]["state"]["values"]["selected_schedule"]["static_select-action"]["selected_option"]["value"]
+
+    err = delete(event_id)
+    msg = "予約が正常に取り消されました" if err != False else "エラーが発生しました。\n再度お試しいただくか、管理者までお問い合わせください。"
+
+    ack(
+        response_action="update",
+        view={
+            "type": "modal",
+            "title": {"type": "plain_text", "text":"予約の削除 :wastebasket:"},
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "plain_text",
+                        "text": msg,
+                    },
+                }
+            ],
+        },
     )
 
 # Start your app

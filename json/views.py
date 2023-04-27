@@ -79,7 +79,7 @@ def view_home(user):
                     "type": "section",
                     "text": {
                         "type": "plain_text",
-                        "text": "[注]分刻みの場合は直接入力する事ができるよ！"
+                        "text": "[注] 分刻みの場合は直接入力する事ができるよ！"
                     }
                 },
                 {
@@ -94,7 +94,7 @@ def view_home(user):
                         },
                     "label": {
                         "type": "plain_text",
-                        "text": ":mag: 詳細",
+                        "text": ":mag: 詳細 (任意入力)",
                         "emoji": True
                     },
                     "block_id": 'textblock'
@@ -115,46 +115,55 @@ def view_home(user):
                     ]
                 },
                 {
-                    "type": "input",
-                    "element": {
-                            "type": "plain_text_input",
-                            "placeholder": {
-                                "type": "plain_text",
-                                "text": "Write eventID"
-                            },
-                            "action_id": "delete_id"
-                        },
-                    "label": {
-                        "type": "plain_text",
-                        "text": "消去したい予約のIDを入力してね！",
-                        "emoji": True
-                    },
-                    "block_id": 'deleteblock'
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": " ",
+                    }
                 },
                 {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "type": "button",
-                            "style": "primary",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "削除"
-                            },
-                            "value": "home_delete",
-                            "action_id": "delete_home",
+                    "type": "divider"
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": " ",
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": ":busts_in_silhouette: *みんなの予約*",
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "確認"
                         },
-                        {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "確認"
-                            },
-                            "value": "home_check",
-                            "action_id": "check_home"
-                        }
-                    ]
-                }
+                        "value": "home_check",
+                        "action_id": "check_home"
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": ":bust_in_silhouette: *自分の予約*",
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "style": "danger",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "確認・削除"
+                        },
+                        "value": "home_delete",
+                        "action_id": "delete_home"
+                    }
+                },
             ]
         }
 
@@ -189,31 +198,101 @@ def view_schedule(text):
 
 
 def view_check(calendar_info):
+    blocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": ("The list of schedules at the tea room is shown below. :memo:\n"
+                            "This list is based on the data collected by this bot, and may be different from the actual state:exclamation:")}
+        },
+    ]
+
+    for ci in calendar_info:
+        blocks.append({"type": "divider"})
+        blocks.append({
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": ci
+            }
+        })
+
     view={
             "type": "modal",
             "callback_id": "view_member",
-            "title": {"type": "plain_text", "text":"Schedules :eyes:"},
+            "title": {"type": "plain_text", "text":"みんなの予約状況"},
+            # "blocks": [
+            #     {
+            #         "type": "section",
+            #         "text": {
+            #             "type": "mrkdwn",
+            #             "text": ("The list of schedules at the tea room is shown below. :memo:\n"
+            #                      "This list is based on the data collected by this bot, and may be different from the actual state:exclamation:")}
+            #     },
+            #     {
+            #         "type": "divider"
+            #     },
+            #     {
+            #         "type": "section",
+            #             "text": {
+            #                 "type": "mrkdwn",
+            #                 "text": calendar_info
+            #             }
+            #     }
+            # ]
+            "blocks": blocks,
+        }
+
+    return view
+
+def view_cancel(user_id, user_schedule_list):
+    if len(user_schedule_list) == 0:
+        return {
+            "type": "modal",
+            "title": {"type": "plain_text", "text":"あなたの予約"},
             "blocks": [
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": ("The list of schedules at the tea room is shown below. :memo:\n"
-                                 "This list is based on the data collected by this bot, and may be different from the actual state:exclamation:")}
+                        "text": f"<@{user_id}>さんには、削除可能な予約がありませんでした :cry:"
+                    }
                 },
+            ]
+        }
+    
+    view = {
+            "type": "modal",
+            "callback_id": "view_cancel_delete",
+            "title": {"type": "plain_text", "text":"あなたの予約"},
+            "submit": {"type": "plain_text", "text": "削除"},
+            "blocks": [
                 {
                     "type": "divider"
                 },
                 {
                     "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": calendar_info
-                        }
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": (f"<@{user_id}>さんの予約のみが表示されます。\n削除する場合は、予約を1つ選択して *削除* ボタンを押してください。")
+                    }
+                },
+                {
+                    "type": "input",
+                    "block_id": "selected_schedule",
+                    "element": {
+                        "type": "static_select",
+                        "options": user_schedule_list,
+                        "action_id": "static_select-action",
+                    },
+                    "label": {
+                        "type": "plain_text",
+                        "text": " ",
+                    }
                 }
             ]
         }
-
     return view
 
 def view_duplicate(user):

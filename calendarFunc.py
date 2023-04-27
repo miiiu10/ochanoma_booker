@@ -69,6 +69,8 @@ def delete(eventId):
     try:
         calendar = CalendarApi()
         calendar.delete(eventId)
+        return True
     except Exception as e:
         print(e)
+        return False
 
