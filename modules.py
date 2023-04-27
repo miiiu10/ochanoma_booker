@@ -102,16 +102,16 @@ def delete_from_chat(user, date, time):
 
 
 def schedule2txt(schedules):
-    txt=''
+    txt_list = []
     if schedules:
         for s in schedules:
             start_dt = str2datetime(s['StartTime'])
             end_dt = str2datetime(s['EndTime'])
             #txt += 'ID: {}\nTime: {}/{} {}:{:02} ~ {}/{} {}:{:02}\nUser: {}\n------------------------------------------------------\n'.format(s['ID'], start_dt.month, start_dt.day, start_dt.hour, start_dt.minute, end_dt.month, end_dt.day, end_dt.hour, end_dt.minute, s['Summary'])
-            txt += 'ID: {}\nTime: {}/{} {}:{:02} ~ {}:{:02}\nUser: {}\n------------------------------------------------------\n'.format(s['ID'], start_dt.month, start_dt.day, start_dt.hour, start_dt.minute, end_dt.hour, end_dt.minute, s['Summary'])
-    else:
-        txt = 'No upcoming events found.'
-    return txt
+            txt_list.append(f'Time: {start_dt.month}/{start_dt.day} {start_dt.hour}:{start_dt.minute:02} ~ {end_dt.hour}:{end_dt.minute:02}\nUser: <@{name2id(s["Summary"])}>')
+    # else:
+        # txt = 'No upcoming events found.'
+    return txt_list
 
 def schedule2list(user_id, schedules):
     "ユーザーIDに紐づくイベントをBoltのOption objectのリストで返す"
@@ -137,6 +137,12 @@ def id2name(id):
     _df = df[df['id'] == id]
     name = _df['name'].unique()[0]
     return name
+
+def name2id(name):
+    df = pd.read_csv('iiclab_member.csv')
+    _df = df[df['name'] == name]
+    id = _df['id'].unique()[0]
+    return id
 
 def str2datetime(str):
     date, time = str.split('T')

@@ -9,7 +9,6 @@ import logging
 from slack_sdk import WebClient
 from slack_bolt import App, Ack
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-from time import sleep
 
 #CHANNEL_ID = "#apptest"
 CHANNEL_ID = "#お茶室予約"
@@ -125,13 +124,14 @@ def action_button_click(body, ack, say):
         # メッセージから時間を取得
         # チャットへのメッセージを変更したらここも変更
         text = body['message']['text']
-        date, time = text.split()
-        date = date[-10:]   # 2022-02-23
-        time = time[:11]    # 12:00~14:30
+        splited_text = list(text.split())
+        # TODO: 正規表現を用いる
+        date_str = splited_text[0][-10:]  # 2022-02-23
+        time_str = splited_text[1][:11]    # 12:00~14:30
 
-        check_flag = delete_from_chat(click_user, date, time)
+        check_flag = delete_from_chat(click_user, date_str, time_str)
         if check_flag:
-            say(f"<@{body['user']['id']}> が予約を消しました。")
+            say(f"<@{body['user']['id']}> が予約を取り消しました。")
 
     else:
         say("他の人の予約は消せません。")
@@ -158,14 +158,13 @@ def handle_view_events(ack, body, logger):
     event_id = body["view"]["state"]["values"]["selected_schedule"]["static_select-action"]["selected_option"]["value"]
 
     err = delete(event_id)
-    msg = "正常に完了しました" if err != False else "エラーが発生しました"
+    msg = "予約が正常に取り消されました" if err != False else "エラーが発生しました。\n再度お試しいただくか、管理者までお問い合わせください。"
 
     ack(
         response_action="update",
         view={
             "type": "modal",
-            "callback_id": "modal-id",
-            "title": {"type": "plain_text", "text":"Schedules :eyes:"},
+            "title": {"type": "plain_text", "text":"予約の削除 :wastebasket:"},
             "blocks": [
                 {
                     "type": "section",
