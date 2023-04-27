@@ -9,6 +9,7 @@ import logging
 from slack_sdk import WebClient
 from slack_bolt import App, Ack
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from time import sleep
 
 #CHANNEL_ID = "#apptest"
 CHANNEL_ID = "#お茶室予約"
@@ -48,6 +49,7 @@ def update_home_tab(client, event, logger):
     except Exception as e:
         logger.error(f"Error publishing home tab: {e}")
 
+
 # Listens to incoming messages that contain "hello"
 @app.message("hello")
 def message_hello(message, say):
@@ -73,6 +75,7 @@ def action_button_click(body, ack, say):
     ack()
     say(f"<@{body['user']['id']}> clicked the button")
 
+
 @app.action("add_home")
 def handle_some_action(ack, body, client):
     ack()
@@ -86,8 +89,8 @@ def handle_some_action(ack, body, client):
         end_time = "{:02}:{:02}".format(start_hour+1, start_minute)
     description = body['view']['state']['values']['textblock']['description']['value']
 
-    check_frag = manage_info(user, add=True, date=date, start_time=start_time, end_time=end_time, description=description)
-    if check_frag:
+    check_flag = manage_info(user, add=True, date=date, start_time=start_time, end_time=end_time, description=description)
+    if check_flag:
         schedules = get()
         ui = view_schedule(schedule2txt(schedules))
         client.chat_postMessage(
@@ -126,8 +129,8 @@ def action_button_click(body, ack, say):
         date = date[-10:]   # 2022-02-23
         time = time[:11]    # 12:00~14:30
 
-        check_frag = delete_from_chat(click_user, date, time)
-        if check_frag:
+        check_flag = delete_from_chat(click_user, date, time)
+        if check_flag:
             say(f"<@{body['user']['id']}> が予約を消しました。")
 
     else:
@@ -136,36 +139,27 @@ def action_button_click(body, ack, say):
 @app.action("delete_home")
 def action_member(ack, body, client):
     ack()
-    user = body['user']['id']
-    id = body['view']['state']['values']['deleteblock']['delete_id']['value']
-    check_frag = manage_info(user, add=False, event_id=id)
-    if check_frag:
-        schedules = get()
-        ui = view_schedule(schedule2txt(schedules))
-    else:
-        ui = view_delete_fail(user)
+    user_id = body['user']['id']
     client.views_open(
         trigger_id=body["trigger_id"],
-        view=ui
+        view=view_cancel(user_id, schedule2list(user_id, get()))
     )
 
 @app.action("check_home")
 def action_member(ack, body, client):
     ack()
-    user_id = body['user']['id']
-    user_schedule_list = schedule2list(user_id, get())
     client.views_open(
         trigger_id=body["trigger_id"],
-        # view=view_check(schedule2txt(get()))
-        view=view_cancel(user_id, user_schedule_list)
+        view=view_check(schedule2txt(get()))
     )
 
-# view.callback_id にマッチングする（正規表現も可能）
 @app.view("view_cancel_delete")
-def handle_view_cancel_events(ack: Ack, view: dict, client: WebClient):
-    # TODO: 正しく取得できるか確認
-    event_id = view["state"]["values"]["selected_schedule"]["action_id"]["static_select-action"]
-    # まず「処理中...」である旨を伝えます
+def handle_view_events(ack, body, logger):
+    event_id = body["view"]["state"]["values"]["selected_schedule"]["static_select-action"]["selected_option"]["value"]
+
+    err = delete(event_id)
+    msg = "正常に完了しました" if err != False else "エラーが発生しました"
+
     ack(
         response_action="update",
         view={
@@ -177,27 +171,8 @@ def handle_view_cancel_events(ack: Ack, view: dict, client: WebClient):
                     "type": "section",
                     "text": {
                         "type": "plain_text",
-                        "text": "処理中です... このモーダルを閉じずにしばらくお待ちください :bow:",
+                        "text": msg,
                     },
-                }
-            ],
-        },
-    )
-
-    delete(event_id)
-
-    # 結果を待った後 views.update API を非同期で呼び出して再度更新をかけます
-    client.views_update(
-        view_id=view.get("id"),
-        view={
-            "type": "modal",
-            # "callback_id": "modal-id",
-            "title": {"type": "plain_text", "text":"Schedules :eyes:"},
-            "close": {"type": "plain_text", "text": "閉じる"},
-            "blocks": [
-                {
-                    "type": "section",
-                    "text": {"type": "plain_text", "text": "正常に完了しました！"},
                 }
             ],
         },
