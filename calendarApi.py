@@ -1,26 +1,15 @@
-from configparser import ConfigParser
-import errno
 import os
-import re
-import json
 import datetime
 from google.auth import load_credentials_from_file
 from googleapiclient.discovery import build
-from calendarData import CalendarData
-
 
 
 class CalendarApi():
     def __init__(self):
-        config = ConfigParser()
-        config_path = './bolt_config.ini'
-        if not os.path.exists(config_path):
-            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), config_path)
-        config.read(config_path)
-        self.__calendarId = config["CALENDAR"]["id"]
+        self.__calendarId = os.getenv("CALENDAR_ID")
 
-        SCOPES = [config["CALENDAR"]["scopes"]]
-        gapi_creds = load_credentials_from_file('json/google_calendar_key.json', SCOPES)[0]
+        SCOPES = [os.getenv("CALENDAR_SCOPES")]
+        gapi_creds = load_credentials_from_file('google_calendar_key.json', SCOPES)[0]
         self.__service = build('calendar', 'v3', credentials=gapi_creds)
 
     @property
@@ -52,7 +41,6 @@ class CalendarApi():
         self.__eventId = val
 
     def get(self):
-        results = []
         now = datetime.datetime.now(datetime.timezone.utc)
 
         nextWeek = now + datetime.timedelta(days=30)

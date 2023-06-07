@@ -1,4 +1,6 @@
 def view_home(user):
+    google_calendar_url = "https://calendar.google.com/calendar/u/0?cid=Y19uNzNwbGVzZWtxYXRzanU2aDFjcTFibjJhc0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t"
+    scrap_box_url = "https://scrapbox.io/iiclab/OchanomaBooker%E3%81%AE%E4%BD%BF%E3%81%84%E6%96%B9"
     view = {
             "type": "home",
             "blocks": [
@@ -14,8 +16,8 @@ def view_home(user):
                     "text": {
                         "type": "mrkdwn",
                         "text": (f"<@{user}>さん、ここでお茶の間の予約をしてみよう :tada:\n"
-                                 "予約状況は<https://calendar.google.com/calendar/u/0?cid=Y19uNzNwbGVzZWtxYXRzanU2aDFjcTFibjJhc0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t|*ここ*>から見てね :eyes:\n"
-                                 "使い方は<https://scrapbox.io/iiclab/OchanomaBooker%E3%81%AE%E4%BD%BF%E3%81%84%E6%96%B9|*Scrapbox*>を参考にしてね :green_book:\n")
+                                 f"予約状況は<{google_calendar_url}|*ここ*>から見てね :eyes:\n"
+                                 f"使い方は<{scrap_box_url}|*Scrapbox*>を参考にしてね :green_book:\n")
                     }
                 },
                 {
@@ -25,7 +27,6 @@ def view_home(user):
                     "type": "input",
                     "element": {
                         "type": "datepicker",
-                        #"initial_date": "2022-08-01",
                         "placeholder": {
                             "type": "plain_text",
                             "text": "Select a date"
@@ -43,7 +44,6 @@ def view_home(user):
                     "type": "input",
                     "element": {
                             "type": "timepicker",
-                            #"initial_time": "00:00",
                             "placeholder": {
                                 "type": "plain_text",
                                 "text": "Select start time"
@@ -61,7 +61,6 @@ def view_home(user):
                     "type": "input",
                     "element": {
                             "type": "timepicker",
-                            #"initial_time": "00:00",
                             "placeholder": {
                                 "type": "plain_text",
                                 "text": "Select end time"
@@ -79,7 +78,7 @@ def view_home(user):
                     "type": "section",
                     "text": {
                         "type": "plain_text",
-                        "text": "[注] 分刻みの場合は直接入力する事ができるよ！"
+                        "text": "※ 分刻みの場合は直接入力する事ができるよ！"
                     }
                 },
                 {
@@ -166,8 +165,8 @@ def view_home(user):
                 },
             ]
         }
-
     return view
+
 
 def view_schedule(text):
     view={
@@ -193,7 +192,6 @@ def view_schedule(text):
                 }
             ]
         }
-
     return view
 
 
@@ -222,25 +220,6 @@ def view_check(calendar_info):
             "type": "modal",
             "callback_id": "view_member",
             "title": {"type": "plain_text", "text":"みんなの予約状況"},
-            # "blocks": [
-            #     {
-            #         "type": "section",
-            #         "text": {
-            #             "type": "mrkdwn",
-            #             "text": ("The list of schedules at the tea room is shown below. :memo:\n"
-            #                      "This list is based on the data collected by this bot, and may be different from the actual state:exclamation:")}
-            #     },
-            #     {
-            #         "type": "divider"
-            #     },
-            #     {
-            #         "type": "section",
-            #             "text": {
-            #                 "type": "mrkdwn",
-            #                 "text": calendar_info
-            #             }
-            #     }
-            # ]
             "blocks": blocks,
         }
 
@@ -295,6 +274,7 @@ def view_cancel(user_id, user_schedule_list):
         }
     return view
 
+
 def view_duplicate(user):
     view = {
         "type": "modal",
@@ -319,6 +299,7 @@ def view_duplicate(user):
         ]
     }
     return view
+
 
 def view_delete_fail(user):
     view = {

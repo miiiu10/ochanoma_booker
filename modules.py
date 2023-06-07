@@ -1,15 +1,7 @@
-import sys
 import datetime
-import urllib.parse
 import pandas as pd
-import os.path as osp
-from messages import gen_text, message_random
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), 'json'))
-from views import view_schedule, view_duplicate, view_delete_fail
-
-from calendarApi import CalendarApi
-from calendarData import CalendarBody, CalendarData
+from calendarData import CalendarData
 from calendarFunc import insert, get, delete, search_from_name, check_calendar
 
 def manage_info(user, add, date='2022-08-15', start_time='00:00', end_time='00:01', description='', event_id=''):
@@ -154,3 +146,8 @@ def str2datetime(str):
 
 def is_overlap_time(starttime1, endtime1, starttime2, endtime2):
     return starttime1 <= endtime2 and endtime1 >= starttime2
+
+def get_end_time(time):
+    s_hour, s_minute = map(int, time.split(':'))
+    e_hour = s_hour + 1
+    return f'{e_hour:0=2}:{s_minute:0=2}'

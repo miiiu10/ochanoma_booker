@@ -1,13 +1,7 @@
-brotlipy==0.7.0
+Bottleneck @ file:///opt/conda/conda-bld/bottleneck_1657175564434/work
 cachetools==5.2.0
-certifi @ file:///croot/certifi_1671487769961/work/certifi
-cffi @ file:///croot/cffi_1670423208954/work
+certifi==2022.6.15
 charset-normalizer==2.1.0
-conda==23.1.0
-conda-content-trust @ file:///tmp/abs_5952f1c8-355c-4855-ad2e-538535021ba5h26t22e5/croots/recipe/conda-content-trust_1658126371814/work
-conda-package-handling @ file:///croot/conda-package-handling_1672865015732/work
-conda_package_streaming @ file:///croot/conda-package-streaming_1670508151586/work
-cryptography @ file:///croot/cryptography_1673298753778/work
 google-api-core==2.8.2
 google-api-python-client==2.55.0
 google-auth==2.10.0
@@ -16,31 +10,26 @@ google-auth-oauthlib==0.5.2
 googleapis-common-protos==1.56.4
 httplib2==0.20.4
 idna==3.3
-numpy==1.24.3
+mkl-fft==1.3.1
+mkl-random==1.2.2
+mkl-service==2.4.0
+numexpr @ file:///opt/conda/conda-bld/numexpr_1656940300424/work
+numpy @ file:///tmp/abs_653_j00fmm/croots/recipe/numpy_and_numpy_base_1659432701727/work
 oauthlib==3.2.0
-pandas==2.0.1
-pluggy @ file:///tmp/build/80754af9/pluggy_1648024709248/work
+packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1637239678211/work
+pandas==1.4.3
 protobuf==4.21.4
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-pycosat @ file:///croot/pycosat_1666805502580/work
-pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
-pyOpenSSL @ file:///opt/conda/conda-bld/pyopenssl_1643788558760/work
-pyparsing==3.0.9
-PySocks @ file:///home/builder/ci_310/pysocks_1640793678128/work
-python-dateutil==2.8.2
-pytz==2023.3
-requests @ file:///opt/conda/conda-bld/requests_1657734628632/work
+pyparsing @ file:///home/conda/feedstock_root/build_artifacts/pyparsing_1652235407899/work
+python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
+python-dotenv==1.0.0
+pytz @ file:///home/conda/feedstock_root/build_artifacts/pytz_1647961439546/work
+requests==2.28.1
 requests-oauthlib==1.3.1
 rsa==4.9
-ruamel.yaml @ file:///croot/ruamel.yaml_1666304550667/work
-ruamel.yaml.clib @ file:///croot/ruamel.yaml.clib_1666302247304/work
-six @ file:///tmp/build/80754af9/six_1644875935023/work
+six @ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
 slack-bolt==1.14.3
 slack-sdk==3.18.1
-toolz @ file:///croot/toolz_1667464077321/work
-tqdm @ file:///opt/conda/conda-bld/tqdm_1664392687731/work
-tzdata==2023.3
 uritemplate==4.1.1
 urllib3==1.26.11
-zstandard @ file:///opt/conda/conda-bld/zstandard_1663827383994/work

@@ -1,18 +1,34 @@
 import datetime
 from calendarApi import CalendarApi
-from calendarData import CalendarBody, CalendarData
+
 
 def insert(calData1, calData2):
     try:
         calendar = CalendarApi()
-        calContent = CalendarBody()
 
-        body = calContent.createInsertData(calData1, calData2)
+        body = create_insert_data(calData1, calData2)
         result = calendar.insert(body)
         calData1.eventId = result["id"]
         calData2.eventId = result["id"]
     except Exception as e:
         print(e)
+
+
+def create_insert_data(data1, data2):
+    body = {
+        'summary':data1.summary,
+        'description': data1.description,
+        'start':{
+            'dateTime': datetime.datetime(data1.year, data1.month, data1.day, data1.hour, data1.minute).isoformat(),
+            'timeZone': 'Japan'
+        },
+        'end': {
+            'dateTime': datetime.datetime(data2.year, data2.month, data2.day, data2.hour, data2.minute).isoformat(),
+            'timeZone': 'Japan'
+        },
+    }
+    return body
+
 
 def check_calendar(start_time):
     calendar = CalendarApi()
@@ -31,6 +47,7 @@ def check_calendar(start_time):
     except Exception as e:
         print(e)
 
+
 def get():
     calendar = CalendarApi()
     try:
@@ -48,6 +65,7 @@ def get():
     except Exception as e:
         print(e)
 
+
 def search_from_name(name):
     calendar = CalendarApi()
     try:
@@ -64,6 +82,7 @@ def search_from_name(name):
             return schedule_list
     except Exception as e:
         print(e)
+
 
 def delete(eventId):
     try:

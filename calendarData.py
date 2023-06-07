@@ -1,21 +1,3 @@
-import datetime
-
-class CalendarBody():
-    def createInsertData(self, data1, data2):
-        body = {
-            'summary':data1.summary,
-            'description': data1.description,
-            'start':{
-                'dateTime': datetime.datetime(data1.year, data1.month, data1.day, data1.hour, data1.minute).isoformat(),
-                'timeZone': 'Japan'
-            },
-            'end': {
-                'dateTime': datetime.datetime(data2.year, data2.month, data2.day, data2.hour, data2.minute).isoformat(),
-                'timeZone': 'Japan'
-            },
-        }
-        return body
-
 class CalendarData():
     @property
     def eventId(self):

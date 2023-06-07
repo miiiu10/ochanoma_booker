@@ -109,6 +109,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env.*
 
 # Spyder project settings
 .spyderproject
@@ -131,4 +132,4 @@ dmypy.json
 # API ID, member_csv
 iiclab_member.csv
 bolt_config.ini
-json/google_calendar_key.json
+google_calendar_key.json

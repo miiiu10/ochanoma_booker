@@ -1,39 +1,23 @@
 import os
-import os.path as osp
 import re
-import sys
-import errno
-from configparser import ConfigParser
+from dotenv import load_dotenv
 import logging
 
-from slack_sdk import WebClient
-from slack_bolt import App, Ack
+from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-#CHANNEL_ID = "#apptest"
-CHANNEL_ID = "#お茶室予約"
+from views import view_duplicate, view_home, view_check, view_schedule, view_cancel
+from modules import manage_info, schedule2txt, delete_from_chat, schedule2list
+from calendarFunc import get, delete
 
 logging.basicConfig(level=logging.DEBUG)
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), 'json'))
-#from blocks import block_other
-from views import view_delete_fail, view_duplicate, view_home, view_check, view_schedule, view_cancel
-from modules import manage_info, schedule2txt, delete_from_chat, schedule2list
-from calendarFunc import insert, get, delete
-
-config = ConfigParser()
-config_path = './bolt_config.ini'
-if not os.path.exists(config_path):
-    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), config_path)
-config.read(config_path)
-
-def get_end_time(time):
-    s_hour, s_minute = map(int, time.split(':'))
-    e_hour = s_hour + 1
-    return f'{e_hour:0=2}:{s_minute:0=2}'
+# Load .env file as environment varialble
+load_dotenv(f".env.{os.getenv('env')}")
 
 # Initializes your app with your bot token and socket mode handler
-app = App(token=config['DEFAULT']['token'])
+app = App(token=os.getenv('TOKEN'))
+
 
 @app.event("app_home_opened")
 def update_home_tab(client, event, logger):
@@ -49,10 +33,9 @@ def update_home_tab(client, event, logger):
         logger.error(f"Error publishing home tab: {e}")
 
 
-# Listens to incoming messages that contain "hello"
 @app.message("hello")
 def message_hello(message, say):
-    # say() sends a message to the channel where the event was triggered
+    "Listen to incoming messages that contain 'hello'"
     say(
         blocks=[
             {
@@ -68,10 +51,10 @@ def message_hello(message, say):
         text=f"Hey there <@{message['user']}>!"
     )
 
+
 @app.action("button_click")
 def action_button_click(body, ack, say):
-    # Acknowledge the action
-    ack()
+    ack()   # Acknowledge the action
     say(f"<@{body['user']['id']}> clicked the button")
 
 
@@ -93,7 +76,7 @@ def handle_some_action(ack, body, client):
         schedules = get()
         ui = view_schedule(schedule2txt(schedules))
         client.chat_postMessage(
-            channel=CHANNEL_ID,
+            channel=os.getenv("CHANNEL_ID"),
             blocks=[
                 {
                     "type": "section",
@@ -177,6 +160,8 @@ def handle_view_events(ack, body, logger):
         },
     )
 
-# Start your app
+
+# Start app
 if __name__ == "__main__":
-    SocketModeHandler(app, config['DEFAULT']['slack_app_token']).start()
+
+    SocketModeHandler(app, os.getenv('SLACK_APP_TOKEN')).start()
