@@ -31,12 +31,14 @@
     |  `google_calendar_key.json`  |  keys for Google Calendar API  |
     |  `iiclab_member.csv`  |  List of Slack members' names and IDs  |
 
-5. Configure the Slack app
-    > ### [App Manifest](https://api.slack.com/reference/manifests)
-    >
-    > The manifest below captures your app as it’s currently configured. You can make any changes to your basic info, settings, or feature configurations right here.
+5. Create Slack app using manifest
+    > ## What are manifests? 
+    > 
+    > Manifests are YAML or JSON-formatted configurations bundles for Slack apps. With a manifest, you can use a UI or an API to create an app with a pre-defined configuration, or adjust the configuration of existing apps.
+    > 
+    > [Create and configure apps with manifests \| Slack](https://api.slack.com/reference/manifests)
 
-    Create a new slack app at [Slack API](https://api.slack.com/) and configure it like in `app_manifest.json`. Then, install the app to your workspace.
+    You can create an app from a manifest (`app_manifest.json`), and it requires only [a few steps](https://api.slack.com/reference/manifests#creating_apps)
 
 6. Run the app
     ```bash
