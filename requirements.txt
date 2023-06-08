@@ -1,7 +1,10 @@
+black==23.3.0
 Bottleneck @ file:///opt/conda/conda-bld/bottleneck_1657175564434/work
 cachetools==5.2.0
 certifi==2022.6.15
 charset-normalizer==2.1.0
+click==8.1.3
+flake8==6.0.0
 google-api-core==2.8.2
 google-api-python-client==2.55.0
 google-auth==2.10.0
@@ -10,17 +13,23 @@ google-auth-oauthlib==0.5.2
 googleapis-common-protos==1.56.4
 httplib2==0.20.4
 idna==3.3
+mccabe==0.7.0
 mkl-fft==1.3.1
 mkl-random==1.2.2
 mkl-service==2.4.0
+mypy-extensions==1.0.0
 numexpr @ file:///opt/conda/conda-bld/numexpr_1656940300424/work
 numpy @ file:///tmp/abs_653_j00fmm/croots/recipe/numpy_and_numpy_base_1659432701727/work
 oauthlib==3.2.0
-packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1637239678211/work
+packaging==23.1
 pandas==1.4.3
+pathspec==0.11.1
+platformdirs==3.5.1
 protobuf==4.21.4
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
+pycodestyle==2.10.0
+pyflakes==3.0.1
 pyparsing @ file:///home/conda/feedstock_root/build_artifacts/pyparsing_1652235407899/work
 python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
 python-dotenv==1.0.0
@@ -31,5 +40,7 @@ rsa==4.9
 six @ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
 slack-bolt==1.14.3
 slack-sdk==3.18.1
+tomli==2.0.1
+typing_extensions==4.6.3
 uritemplate==4.1.1
 urllib3==1.26.11

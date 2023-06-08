@@ -10,13 +10,23 @@ from views import view_duplicate, view_home, view_check, view_schedule, view_can
 from modules import manage_info, schedule2txt, delete_from_chat, schedule2list
 from calendarFunc import get, delete
 
-logging.basicConfig(level=logging.DEBUG)
+
+# Logging settings
+loging_level = logging.DEBUG
+if os.getenv("env") == "prod":
+    loging_level = logging.WARNING
+logging.basicConfig(level=loging_level)
 
 # Load .env file as environment varialble
-load_dotenv(f".env.{os.getenv('env')}")
+load_dotenv(".env")  # Google Calenar scopes and ID
+env_file_path = ".env.dev"
+if os.getenv("env"):
+    env_file_path = f".env.{os.getenv('env')}"
+load_dotenv(env_file_path)  # Slack App tokens
+
 
 # Initializes your app with your bot token and socket mode handler
-app = App(token=os.getenv('TOKEN'))
+app = App(token=os.getenv("TOKEN"))
 
 
 @app.event("app_home_opened")
@@ -24,10 +34,8 @@ def update_home_tab(client, event, logger):
     try:
         # 組み込みのクライアントを使って views.publish を呼び出す
         client.views_publish(
-            # イベントに関連づけられたユーザー ID を使用
-            user_id=event["user"],
-            # アプリの設定で予めホームタブが有効になっている必要がある
-            view=view_home(event["user"])
+            user_id=event["user"],  # イベントに関連づけられたユーザー ID を使用
+            view=view_home(event["user"]),  # アプリの設定で予めホームタブが有効になっている必要がある
         )
     except Exception as e:
         logger.error(f"Error publishing home tab: {e}")
@@ -44,34 +52,45 @@ def message_hello(message, say):
                 "accessory": {
                     "type": "button",
                     "text": {"type": "plain_text", "text": "Click Me"},
-                    "action_id": "button_click"
-                }
+                    "action_id": "button_click",
+                },
             }
         ],
-        text=f"Hey there <@{message['user']}>!"
+        text=f"Hey there <@{message['user']}>!",
     )
 
 
 @app.action("button_click")
 def action_button_click(body, ack, say):
-    ack()   # Acknowledge the action
+    ack()  # Acknowledge the action
     say(f"<@{body['user']['id']}> clicked the button")
 
 
 @app.action("add_home")
 def handle_some_action(ack, body, client):
     ack()
-    user = body['user']['id']
-    date = body['view']['state']['values']['dateblock']['datepick']['selected_date']
-    start_time = body['view']['state']['values']['start_time_block']['timepick']['selected_time']
-    end_time = body['view']['state']['values']['end_time_block']['timepick']['selected_time']
+    user = body["user"]["id"]
+    date = body["view"]["state"]["values"]["dateblock"]["datepick"]["selected_date"]
+    start_time = body["view"]["state"]["values"]["start_time_block"]["timepick"][
+        "selected_time"
+    ]
+    end_time = body["view"]["state"]["values"]["end_time_block"]["timepick"][
+        "selected_time"
+    ]
     # 入力がされなかった時の表示用
-    if end_time==None:
+    if end_time is None:
         start_hour, start_minute = map(int, start_time.split(":"))
-        end_time = "{:02}:{:02}".format(start_hour+1, start_minute)
-    description = body['view']['state']['values']['textblock']['description']['value']
+        end_time = "{:02}:{:02}".format(start_hour + 1, start_minute)
+    description = body["view"]["state"]["values"]["textblock"]["description"]["value"]
 
-    check_flag = manage_info(user, add=True, date=date, start_time=start_time, end_time=end_time, description=description)
+    check_flag = manage_info(
+        user,
+        add=True,
+        date=date,
+        start_time=start_time,
+        end_time=end_time,
+        description=description,
+    )
     if check_flag:
         schedules = get()
         ui = view_schedule(schedule2txt(schedules))
@@ -80,37 +99,38 @@ def handle_some_action(ack, body, client):
             blocks=[
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"<@{body['user']['username']}>が{date} {start_time}~{end_time}に621の会議室を予約しました。"}, # ここを変える時はaction_button_clickも変更
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"<@{body['user']['username']}>が{date} {start_time}~{end_time}に621の会議室を予約しました。",
+                    },  # ここを変える時はaction_button_clickも変更
                     "accessory": {
                         "type": "button",
                         "text": {"type": "plain_text", "text": "delete"},
-                        "action_id": "delete_botton"
-                    }
+                        "action_id": "delete_botton",
+                    },
                 }
-            ]
+            ],
         )
     else:
         ui = view_duplicate(user)
-    client.views_open(
-        trigger_id=body["trigger_id"],
-        view=ui
-    )
+    client.views_open(trigger_id=body["trigger_id"], view=ui)
+
 
 @app.action("delete_botton")
-def action_button_click(body, ack, say):
+def action_delete_button_click(body, ack, say):
     # Acknowledge the action
     ack()
-    click_user = body['user']['id']
-    chat_user = re.search('<@(.*?)>', body['message']['text']).group(1)
+    click_user = body["user"]["id"]
+    chat_user = re.search("<@(.*?)>", body["message"]["text"]).group(1)
 
-    if click_user==chat_user:
+    if click_user == chat_user:
         # メッセージから時間を取得
         # チャットへのメッセージを変更したらここも変更
-        text = body['message']['text']
+        text = body["message"]["text"]
         splited_text = list(text.split())
         # TODO: 正規表現を用いる
         date_str = splited_text[0][-10:]  # 2022-02-23
-        time_str = splited_text[1][:11]    # 12:00~14:30
+        time_str = splited_text[1][:11]  # 12:00~14:30
 
         check_flag = delete_from_chat(click_user, date_str, time_str)
         if check_flag:
@@ -119,35 +139,41 @@ def action_button_click(body, ack, say):
     else:
         say("他の人の予約は消せません。")
 
+
 @app.action("delete_home")
-def action_member(ack, body, client):
+def action_delete_home(ack, body, client):
     ack()
-    user_id = body['user']['id']
+    user_id = body["user"]["id"]
     client.views_open(
         trigger_id=body["trigger_id"],
-        view=view_cancel(user_id, schedule2list(user_id, get()))
+        view=view_cancel(user_id, schedule2list(user_id, get())),
     )
 
+
 @app.action("check_home")
-def action_member(ack, body, client):
+def action_check_home(ack, body, client):
     ack()
     client.views_open(
-        trigger_id=body["trigger_id"],
-        view=view_check(schedule2txt(get()))
+        trigger_id=body["trigger_id"], view=view_check(schedule2txt(get()))
     )
+
 
 @app.view("view_cancel_delete")
 def handle_view_events(ack, body, logger):
-    event_id = body["view"]["state"]["values"]["selected_schedule"]["static_select-action"]["selected_option"]["value"]
+    event_id = body["view"]["state"]["values"]["selected_schedule"][
+        "static_select-action"
+    ]["selected_option"]["value"]
 
     err = delete(event_id)
-    msg = "予約が正常に取り消されました" if err != False else "エラーが発生しました。\n再度お試しいただくか、管理者までお問い合わせください。"
+    msg = (
+        "予約が正常に取り消されました" if not err else "エラーが発生しました。\n再度お試しいただくか、管理者までお問い合わせください。"
+    )
 
     ack(
         response_action="update",
         view={
             "type": "modal",
-            "title": {"type": "plain_text", "text":"予約の削除 :wastebasket:"},
+            "title": {"type": "plain_text", "text": "予約の削除 :wastebasket:"},
             "blocks": [
                 {
                     "type": "section",
@@ -163,5 +189,4 @@ def handle_view_events(ack, body, logger):
 
 # Start app
 if __name__ == "__main__":
-
-    SocketModeHandler(app, os.getenv('SLACK_APP_TOKEN')).start()
+    SocketModeHandler(app, os.getenv("SLACK_APP_TOKEN")).start()
