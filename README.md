@@ -1,32 +1,46 @@
-# OchanomaBooker
+# Ochanoma Booker
 ![kirin](https://user-images.githubusercontent.com/98066319/197503841-260f7b0f-f6e1-45f8-9e44-e05778bf8ac3.gif)
 
-## 概要
-研究室のお茶室のスケジュールを管理するSlackアプリです。
-現在はお茶の間が消失したため、621の会議室のスケジュールを管理しています。
-Google Calendar上でもスケジュールの確認・削除ができます。
 
-## 導入方法
-slackのAppから"OchanomaBooker"を選択します。
+# Setup & Usage
 
-## 使い方
-基本的にホームタブから使用します。
-![booker1](https://user-images.githubusercontent.com/98066319/197503705-d5dc446c-1fe0-4357-a195-b285b5c033c2.png)
+1. Create and activate your virtual environment
+    ```bash
+    conda create -n [yourenvname] python=3.9
+    source activate [yourenvname]
+    ```
 
-### 予定追加時
-日付と開始時刻を選択し、伝えたいことがあれば詳細に記入できます。
-最後に追加ボタンを押すと、予定が追加されます。
-追加する予定は開始時刻から1時間後まででスケジュールに登録されます。（今後終了時刻を入力できるようにしたい…）
-誰かが予定を入れていても追加できてしまうので、スケジュールを要確認。（今後アップデート予定）
-アプリから追加すると#studentsに予約したことが通知されます。（#studentのチャット上で削除できたらいいよね…）
+2. Clone the repository
+    ```bash
+    git clone https://github.com/Kitsuya0828/Ochanoma-Booker.git
+    cd Ochanoma-Booker
+    ```
 
-### 予定確認時
-削除ボタンの横にある確認ボタンを押すと、予定の確認ができます。
-30日後までの予定のみ表示されます。
-![booker2](https://user-images.githubusercontent.com/98066319/197503728-9e6855a1-c849-4a52-bb9c-f97003e49c3d.png)
+3. Install Python packages
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### 予定削除時
-予約確認時に表示された予定のIDを入力し、削除ボタンを押すと予定が削除されます。（違う方法で予約の削除がしたい…）
+4. Place the following files in the project root
+    |  file name  |  contents  |
+    | ---- | ---- |
+    |  `.env.dev`  |  Slack app tokens for the development environment  |
+    |  `.env.qa`  |  Slack app tokens for the staging environment (optional)  |
+    |  `.env.prod`  |  Slack app tokens for the production environment  |
+    |  `.env`  |  scopes and ID for Google Calendar API  |
+    |  `google_calendar_key.json`  |  keys for Google Calendar API  |
+    |  `iiclab_member.csv`  |  List of Slack members' names and IDs  |
 
-### ~~隠しコマンド~~
-~~メッセージで"hello"と打つと…~~
+5. Configure the Slack app
+    > ### [App Manifest](https://api.slack.com/reference/manifests)
+    >
+    > The manifest below captures your app as it’s currently configured. You can make any changes to your basic info, settings, or feature configurations right here.
+
+    Create a new slack app at [Slack API](https://api.slack.com/) and configure it like in `app_manifest.json`. Then, install the app to your workspace.
+
+6. Run the app
+    ```bash
+    env=dev python3 app.py  # development
+    # env=qa python3 app.py # staging
+    # env=prod python3 app.py # production
+    ```
