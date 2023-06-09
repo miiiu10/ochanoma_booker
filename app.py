@@ -6,8 +6,8 @@ import logging
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from views import view_duplicate, view_home, view_check, view_schedule, view_cancel
-from modules import manage_info, schedule2txt, delete_from_chat, schedule2list
+from views import view_home, view_check, view_modal, view_cancel
+from modules import add_reservation, schedule2txt, delete_from_chat, schedule2list
 from calendarFunc import get, delete
 
 
@@ -67,9 +67,11 @@ def action_button_click(body, ack, say):
 
 
 @app.action("add_home")
-def handle_some_action(ack, body, client):
+def acction_add_button_click(ack, body, client, logger):
+    "Add a reservation by clicking the button"
     ack()
-    user = body["user"]["id"]
+    # Extract information from body
+    user_id = body["user"]["id"]
     date = body["view"]["state"]["values"]["dateblock"]["datepick"]["selected_date"]
     start_time = body["view"]["state"]["values"]["start_time_block"]["timepick"][
         "selected_time"
@@ -77,23 +79,23 @@ def handle_some_action(ack, body, client):
     end_time = body["view"]["state"]["values"]["end_time_block"]["timepick"][
         "selected_time"
     ]
-    # 入力がされなかった時の表示用
-    if end_time is None:
-        start_hour, start_minute = map(int, start_time.split(":"))
-        end_time = "{:02}:{:02}".format(start_hour + 1, start_minute)
     description = body["view"]["state"]["values"]["textblock"]["description"]["value"]
 
-    check_flag = manage_info(
-        user,
-        add=True,
+    # Add a reservation using Google Calendar API
+    err, msg = add_reservation(
+        user_id=user_id,
         date=date,
         start_time=start_time,
         end_time=end_time,
         description=description,
     )
-    if check_flag:
-        schedules = get()
-        ui = view_schedule(schedule2txt(schedules))
+    if err:
+        view = view_modal(title="エラー", text=msg)
+    else:
+        # schedules = get()
+        # view = view_schedule(schedule2txt(schedules))
+        # view = view_modal(title="成功", text="成功")
+        # TODO: 上と下は両立しない
         client.chat_postMessage(
             channel=os.getenv("CHANNEL_ID"),
             blocks=[
@@ -111,9 +113,7 @@ def handle_some_action(ack, body, client):
                 }
             ],
         )
-    else:
-        ui = view_duplicate(user)
-    client.views_open(trigger_id=body["trigger_id"], view=ui)
+    client.views_open(trigger_id=body["trigger_id"], view=view)
 
 
 @app.action("delete_botton")
@@ -165,9 +165,7 @@ def handle_view_events(ack, body, logger):
     ]["selected_option"]["value"]
 
     err = delete(event_id)
-    msg = (
-        "予約が正常に取り消されました" if not err else "エラーが発生しました。\n再度お試しいただくか、管理者までお問い合わせください。"
-    )
+    msg = "予約が正常に取り消されました" if not err else "エラーが発生しました。\n再度お試しいただくか、管理者までお問い合わせください。"
 
     ack(
         response_action="update",

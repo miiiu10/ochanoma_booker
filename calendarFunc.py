@@ -1,37 +1,29 @@
-import datetime
+from typing import Tuple
 from calendarApi import CalendarApi
 
 
-def insert(calData1, calData2):
+def insert(start_dt, end_dt, name, description) -> Tuple[bool, str]:
+    "Add a reservation with Google Calendar API"
     try:
         calendar = CalendarApi()
 
-        body = create_insert_data(calData1, calData2)
+        body = {
+            "summary": name,
+            "description": description,
+            "start": {
+                "dateTime": start_dt.isoformat(),
+                "timeZone": "Japan",
+            },
+            "end": {
+                "dateTime": end_dt.isoformat(),
+                "timeZone": "Japan",
+            },
+        }
         result = calendar.insert(body)
-        calData1.eventId = result["id"]
-        calData2.eventId = result["id"]
+        print(result)
+        return (False, result["id"])
     except Exception as e:
-        print(e)
-
-
-def create_insert_data(data1, data2):
-    body = {
-        "summary": data1.summary,
-        "description": data1.description,
-        "start": {
-            "dateTime": datetime.datetime(
-                data1.year, data1.month, data1.day, data1.hour, data1.minute
-            ).isoformat(),
-            "timeZone": "Japan",
-        },
-        "end": {
-            "dateTime": datetime.datetime(
-                data2.year, data2.month, data2.day, data2.hour, data2.minute
-            ).isoformat(),
-            "timeZone": "Japan",
-        },
-    }
-    return body
+        return (True, e)
 
 
 def check_calendar(start_time):

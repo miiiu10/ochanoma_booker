@@ -1,3 +1,6 @@
+from typing import Any
+
+
 def view_home(user):
     google_calendar_url = "https://calendar.google.com/calendar/u/0?cid=Y19uNzNwbGVzZWtxYXRzanU2aDFjcTFibjJhc0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t"  # noqa: E501
     scrap_box_url = (
@@ -247,6 +250,25 @@ def view_duplicate(user):
                         f":wave: Hey <@{user}>!\n\nSorry, your selected time is already reserved.\n"
                         "Please select another time."
                     ),
+                },
+            }
+        ],
+    }
+    return view
+
+
+def view_modal(title: str, text: str) -> dict[str, Any]:
+    "Create a modal view by specifying title and text"
+    view = {
+        "type": "modal",
+        "close": {"type": "plain_text", "text": "閉じる", "emoji": True},
+        "title": {"type": "plain_text", "text": title, "emoji": True},
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": text,
                 },
             }
         ],
