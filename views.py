@@ -1,4 +1,5 @@
-from typing import Any
+import json
+from typing import Any, Optional
 
 
 def view_home(user):
@@ -236,6 +237,62 @@ def view_cancel(user_id, user_schedule_list):
     return view
 
 
+def view_add(user_id, date, start_time, end_time, description):
+    reminder_dict = {
+        "なし": None,
+        "開始時": 0,
+        "5分前": 5,
+        "10分前": 10,
+        "15分前": 15,
+        "30分前": 30,
+        "1時間前": 60,
+        "2時間前": 120,
+    }
+    reminder_list = [
+        {"text": {"type": "plain_text", "text": k}, "value": str(v)}
+        for k, v in reminder_dict.items()
+    ]
+    view = {
+        "type": "modal",
+        "callback_id": "add_callback",
+        "title": {"type": "plain_text", "text": "予約の追加"},
+        "submit": {"type": "plain_text", "text": "確定"},
+        "close": {"type": "plain_text", "text": "キャンセル"},
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"以下の時間帯で予約を追加します\n*{date} {start_time}~{end_time}*",
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "input",
+                "block_id": "selected_reminder",
+                "element": {
+                    "type": "static_select",
+                    "options": reminder_list,
+                    "initial_option": reminder_list[0],
+                    # "action_id": "static_select-action",
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": "リマインダーを設定：",
+                },
+            },
+        ],
+        "private_metadata": json.dumps({
+            "user_id": user_id,
+            "date": date,
+            "start_time": start_time,
+            "end_time": end_time,
+            "description": description,
+        }),
+    }
+    return view
+
+
 def view_duplicate(user):
     view = {
         "type": "modal",
@@ -257,7 +314,7 @@ def view_duplicate(user):
     return view
 
 
-def view_modal(title: str, text: str) -> dict[str, Any]:
+def view_modal(title: str, text: str, callback_id: Optional[str]) -> dict[str, Any]:
     "Create a modal view by specifying title and text"
     view = {
         "type": "modal",
@@ -273,6 +330,9 @@ def view_modal(title: str, text: str) -> dict[str, Any]:
             }
         ],
     }
+    if callback_id:
+        view["callback_id"] = callback_id
+    print("###########", view)
     return view
 
 

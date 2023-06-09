@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import re
 from dotenv import load_dotenv
@@ -7,8 +8,14 @@ import logging
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from views import view_home, view_check, view_modal, view_cancel
-from modules import add_reservation, schedule2txt, delete_from_chat, schedule2list
+from views import view_add, view_home, view_check, view_modal, view_cancel
+from modules import (
+    add_reservation,
+    schedule2txt,
+    delete_from_chat,
+    schedule2list,
+    validate_input,
+)
 from calendarFunc import get, delete
 
 
@@ -68,9 +75,10 @@ def action_button_click(body, ack, say):
 
 
 @app.action("add_home")
-def acction_add_button_click(ack, body, client, logger):
-    "Add a reservation by clicking the button"
+def acction_add_home(ack, body, client, view, logger):
+    "Add a reservation by clicking the button in home tab"
     ack()
+
     # Extract information from body
     user_id = body["user"]["id"]
     date = body["view"]["state"]["values"]["dateblock"]["datepick"]["selected_date"]
@@ -82,25 +90,52 @@ def acction_add_button_click(ack, body, client, logger):
     ]
     description = body["view"]["state"]["values"]["textblock"]["description"]["value"]
 
+    # Validation
+    err, response = validate_input(user_id, date, start_time, end_time, description)
+    if err:
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view=view_modal(
+                title="エラー",
+                text=response,
+                callback_id=None
+            ),
+        )
+    else:
+        end_time = response
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view=view_add(
+                user_id=user_id,
+                date=date,
+                start_time=start_time,
+                end_time=end_time,
+                description=description,
+            ),
+        )
+
+
+@app.view("add_callback")
+def handle_add_callback(ack, body, client):
+    metadata_dict = json.loads(body["view"]["private_metadata"])
+
     # Add a reservation using Google Calendar API
     result, err = add_reservation(
-        user_id=user_id,
-        date=date,
-        start_time=start_time,
-        end_time=end_time,
-        description=description,
+        user_id=metadata_dict["user_id"],
+        date=metadata_dict["date"],
+        start_time=metadata_dict["start_time"],
+        end_time=metadata_dict["end_time"],
+        description=metadata_dict["description"],
     )
     if err:
-        view = view_modal(title="エラー", text=str(err))
+        result_view = view_modal(title="エラー", text=str(err), callback_id=None)
     else:
-        # schedules = get()
-        # view = view_schedule(schedule2txt(schedules))
-        start_time = datetime.datetime.fromisoformat(result['start']['dateTime']).replace(second=0, microsecond=0)
-        end_time = datetime.datetime.fromisoformat(result['end']['dateTime']).replace(second=0, microsecond=0)
+        start_time = datetime.datetime.fromisoformat(result["start"]["dateTime"])
+        end_time = datetime.datetime.fromisoformat(result["end"]["dateTime"])
         message = (
-                    f"{start_time.date()} {str(start_time.time())[:5]}~{str(end_time.time())[:5]}"
-                    "に621の会議室を予約しました"
-                )
+            f"{start_time.date()} {str(start_time.time())[:5]}~{str(end_time.time())[:5]}"
+            "に621の会議室を予約しました"
+        )
 
         client.chat_postMessage(
             channel=os.getenv("CHANNEL_ID"),
@@ -109,7 +144,7 @@ def acction_add_button_click(ack, body, client, logger):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"<@{body['user']['username']}>が" + message
+                        "text": f"<@{body['user']['username']}>が" + message,
                     },  # ここを変える時はaction_button_clickも変更
                     "accessory": {
                         "type": "button",
@@ -119,8 +154,12 @@ def acction_add_button_click(ack, body, client, logger):
                 }
             ],
         )
-        view = view_modal(title="予約成功", text=message)
-    client.views_open(trigger_id=body["trigger_id"], view=view)
+        result_view = view_modal(title="予約の追加", text=message, callback_id=None)
+
+    ack(
+        response_action="update",
+        view=result_view
+    )
 
 
 @app.action("delete_botton")

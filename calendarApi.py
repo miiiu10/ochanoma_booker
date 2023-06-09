@@ -41,10 +41,11 @@ class CalendarApi():
         self.__eventId = val
 
     def get(self):
-        now = datetime.datetime.now(datetime.timezone.utc)
+        jst = datetime.timezone(datetime.timedelta(hours=9))
+        now = datetime.datetime.now(jst)
 
         nextWeek = now + datetime.timedelta(days=30)
-        timeMax = datetime.datetime(nextWeek.year, nextWeek.month, nextWeek.day, 23, 59, tzinfo=datetime.timezone.utc)
+        timeMax = datetime.datetime(nextWeek.year, nextWeek.month, nextWeek.day, 23, 59, tzinfo=jst)
 
         events_result = self.service.events().list(
             calendarId=self.calendarId,
@@ -60,8 +61,9 @@ class CalendarApi():
 
     def check_calendar(self, start_time):
         checkDay = start_time
-        timeMin = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 0, 0, tzinfo=datetime.timezone.utc)
-        timeMax = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 23, 59, tzinfo=datetime.timezone.utc)
+        jst = datetime.timezone(datetime.timedelta(hours=9))
+        timeMin = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 0, 0, tzinfo=jst)
+        timeMax = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 23, 59, tzinfo=jst)
 
         events_result = self.service.events().list(
             calendarId=self.calendarId,
@@ -75,7 +77,8 @@ class CalendarApi():
         return events
 
     def search_from_name(self, name):
-        now = datetime.datetime.now(datetime.timezone.utc)
+        jst = datetime.timezone(datetime.timedelta(hours=9))
+        now = datetime.datetime.now(jst)
 
         events_result = self.service.events().list(
             calendarId=self.calendarId,

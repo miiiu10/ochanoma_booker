@@ -6,11 +6,7 @@ from calendarData import CalendarData
 from calendarFunc import insert, get, delete, search_from_name, check_calendar
 
 
-def add_reservation(
-    user_id: str, date: str, start_time: str, end_time: str, description: str = ""
-) -> Tuple[Optional[dict], Optional[str]]:
-    name = id2name(user_id)
-
+def validate_input(user_id: str, date: str, start_time: str, end_time: str, description: str = ""):
     # Validation
     if date is None:
         return (True, "日付を入力してください")
@@ -36,6 +32,19 @@ def add_reservation(
     if e_dt_add <= s_dt_add:
         return (True, "終了時間は開始時間よりも遅い時間にしてください")
 
+    return (False, f"{e_hour:02}:{e_minute:02}")
+
+
+def add_reservation(
+    user_id: str, date: str, start_time: str, end_time: str, description: str = ""
+) -> Tuple[Optional[dict], Optional[str]]:
+    name = id2name(user_id)
+    year, month, day = map(int, date.split("-"))
+    s_hour, s_minute = map(int, start_time.split(":"))
+    e_hour, e_minute = map(int, end_time.split(":"))
+    s_dt_add = datetime.datetime(year, month, day, s_hour, s_minute)
+    e_dt_add = datetime.datetime(year, month, day, e_hour, e_minute)
+
     # Reservation duplication check
     schedules = check_calendar(s_dt_add)
     if schedules:
@@ -43,7 +52,7 @@ def add_reservation(
             s_dt_another = str2datetime(schedule["StartTime"])
             e_dt_another = str2datetime(schedule["EndTime"])
             if s_dt_another < e_dt_add and s_dt_add < e_dt_another:
-                return (True, "予定が被っています")
+                return (None, "予定が被っています")
 
     result, err = insert(s_dt_add, e_dt_add, name, description)
     return (result, err)
