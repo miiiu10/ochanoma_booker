@@ -1,3 +1,4 @@
+import datetime
 import os
 import re
 from dotenv import load_dotenv
@@ -82,7 +83,7 @@ def acction_add_button_click(ack, body, client, logger):
     description = body["view"]["state"]["values"]["textblock"]["description"]["value"]
 
     # Add a reservation using Google Calendar API
-    err, msg = add_reservation(
+    result, err = add_reservation(
         user_id=user_id,
         date=date,
         start_time=start_time,
@@ -90,12 +91,17 @@ def acction_add_button_click(ack, body, client, logger):
         description=description,
     )
     if err:
-        view = view_modal(title="エラー", text=msg)
+        view = view_modal(title="エラー", text=str(err))
     else:
         # schedules = get()
         # view = view_schedule(schedule2txt(schedules))
-        # view = view_modal(title="成功", text="成功")
-        # TODO: 上と下は両立しない
+        start_time = datetime.datetime.fromisoformat(result['start']['dateTime']).replace(second=0, microsecond=0)
+        end_time = datetime.datetime.fromisoformat(result['end']['dateTime']).replace(second=0, microsecond=0)
+        message = (
+                    f"{start_time.date()} {str(start_time.time())[:5]}~{str(end_time.time())[:5]}"
+                    "に621の会議室を予約しました"
+                )
+
         client.chat_postMessage(
             channel=os.getenv("CHANNEL_ID"),
             blocks=[
@@ -103,7 +109,7 @@ def acction_add_button_click(ack, body, client, logger):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"<@{body['user']['username']}>が{date} {start_time}~{end_time}に621の会議室を予約しました。",
+                        "text": f"<@{body['user']['username']}>が" + message
                     },  # ここを変える時はaction_button_clickも変更
                     "accessory": {
                         "type": "button",
@@ -113,6 +119,7 @@ def acction_add_button_click(ack, body, client, logger):
                 }
             ],
         )
+        view = view_modal(title="予約成功", text=message)
     client.views_open(trigger_id=body["trigger_id"], view=view)
 
 
@@ -165,7 +172,10 @@ def handle_view_events(ack, body, logger):
     ]["selected_option"]["value"]
 
     err = delete(event_id)
-    msg = "予約が正常に取り消されました" if not err else "エラーが発生しました。\n再度お試しいただくか、管理者までお問い合わせください。"
+    if err:
+        msg = "エラーが発生しました。\n再度お試しいただくか、管理者までお問い合わせください。"
+    else:
+        msg = "予約が正常に取り消されました"
 
     ack(
         response_action="update",

@@ -1,8 +1,9 @@
-from typing import Tuple
+import logging
+from typing import Optional, Tuple
 from calendarApi import CalendarApi
 
 
-def insert(start_dt, end_dt, name, description) -> Tuple[bool, str]:
+def insert(start_dt, end_dt, name, description) -> Tuple[Optional[dict], Optional[str]]:
     "Add a reservation with Google Calendar API"
     try:
         calendar = CalendarApi()
@@ -20,10 +21,9 @@ def insert(start_dt, end_dt, name, description) -> Tuple[bool, str]:
             },
         }
         result = calendar.insert(body)
-        print(result)
-        return (False, result["id"])
+        return (result, None)
     except Exception as e:
-        return (True, e)
+        return (None, e)
 
 
 def check_calendar(start_time):
@@ -95,11 +95,11 @@ def search_from_name(name):
         print(e)
 
 
-def delete(eventId):
+def delete(event_id: str) -> bool:
     try:
         calendar = CalendarApi()
-        calendar.delete(eventId)
-        return True
-    except Exception as e:
-        print(e)
+        calendar.delete(event_id)
         return False
+    except Exception as e:
+        logging.error(e)
+        return True

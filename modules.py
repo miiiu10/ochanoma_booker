@@ -1,13 +1,14 @@
 import datetime
-import logging
-from typing import Tuple
+from typing import Optional, Tuple
 import pandas as pd
 
 from calendarData import CalendarData
 from calendarFunc import insert, get, delete, search_from_name, check_calendar
 
 
-def add_reservation(user_id: str, date: str, start_time: str, end_time: str, description: str = "") -> Tuple[bool, str]:
+def add_reservation(
+    user_id: str, date: str, start_time: str, end_time: str, description: str = ""
+) -> Tuple[Optional[dict], Optional[str]]:
     name = id2name(user_id)
 
     # Validation
@@ -20,17 +21,20 @@ def add_reservation(user_id: str, date: str, start_time: str, end_time: str, des
     s_hour, s_minute = map(int, start_time.split(":"))
 
     if end_time is None:
-        e_hour = s_hour + 1
-        e_minute = s_minute
+        if s_hour == 23:
+            e_hour = s_hour
+            e_minute = 59
+        else:
+            e_hour = s_hour + 1
+            e_minute = s_minute
     else:
         e_hour, e_minute = map(int, end_time.split(":"))
 
-    logging.info(e_hour <= s_hour, e_minute <= s_minute)
-    if e_hour <= s_hour and e_minute <= s_minute:
-        return (True, "終了時間は開始時間よりも遅い時間にしてください")
-
     s_dt_add = datetime.datetime(year, month, day, s_hour, s_minute)
     e_dt_add = datetime.datetime(year, month, day, e_hour, e_minute)
+
+    if e_dt_add <= s_dt_add:
+        return (True, "終了時間は開始時間よりも遅い時間にしてください")
 
     # Reservation duplication check
     schedules = check_calendar(s_dt_add)
@@ -41,22 +45,30 @@ def add_reservation(user_id: str, date: str, start_time: str, end_time: str, des
             if s_dt_another < e_dt_add and s_dt_add < e_dt_another:
                 return (True, "予定が被っています")
 
-    err, msg = insert(s_dt_add, e_dt_add, name, description)
-    return (err, msg)
+    result, err = insert(s_dt_add, e_dt_add, name, description)
+    return (result, err)
 
 
-def manage_info(user, add, date='2022-08-15', start_time='00:00', end_time='00:01', description='', event_id=''):
-    df = pd.read_csv('iiclab_member.csv')
-    _df = df[df['id'] == user]
-    name = _df['name'].unique()[0]
+def manage_info(
+    user,
+    add,
+    date="2022-08-15",
+    start_time="00:00",
+    end_time="00:01",
+    description="",
+    event_id="",
+):
+    df = pd.read_csv("iiclab_member.csv")
+    _df = df[df["id"] == user]
+    name = _df["name"].unique()[0]
 
-    year, month, day = map(int, date.split('-'))
-    s_hour, s_minute = map(int, start_time.split(':'))
+    year, month, day = map(int, date.split("-"))
+    s_hour, s_minute = map(int, start_time.split(":"))
     if end_time is None:
         e_hour = s_hour + 1
         e_minute = s_minute + 1
     else:
-        e_hour, e_minute = map(int, end_time.split(':'))
+        e_hour, e_minute = map(int, end_time.split(":"))
 
     check_frag = True
     if add:
@@ -66,7 +78,7 @@ def manage_info(user, add, date='2022-08-15', start_time='00:00', end_time='00:0
         s_calData.day = day
         s_calData.hour = s_hour
         s_calData.minute = s_minute
-        s_calData.summary = '{}'.format(name)
+        s_calData.summary = "{}".format(name)
         s_calData.description = description
 
         e_calData = CalendarData()
@@ -75,7 +87,7 @@ def manage_info(user, add, date='2022-08-15', start_time='00:00', end_time='00:0
         e_calData.day = day
         e_calData.hour = e_hour
         e_calData.minute = e_minute
-        e_calData.summary = '{}'.format(name)
+        e_calData.summary = "{}".format(name)
         e_calData.description = description
 
         s_dt_add = datetime.datetime(year, month, day, s_hour, s_minute)
@@ -84,15 +96,15 @@ def manage_info(user, add, date='2022-08-15', start_time='00:00', end_time='00:0
 
         if schedules:
             for s in schedules:
-                start_dt = str2datetime(s['StartTime'])
-                end_dt = str2datetime(s['EndTime'])
+                start_dt = str2datetime(s["StartTime"])
+                end_dt = str2datetime(s["EndTime"])
                 if (start_dt < e_dt_add) and (s_dt_add < end_dt):
                     check_frag = False
 
         if check_frag:
             insert(s_calData, e_calData)
         else:
-            print('予定が被っています。')
+            print("予定が被っています。")
 
         return check_frag
 
@@ -100,8 +112,8 @@ def manage_info(user, add, date='2022-08-15', start_time='00:00', end_time='00:0
         schedules = get()
         if schedules:
             for s in schedules:
-                if s['ID'] == event_id:
-                    delete(s['ID'])
+                if s["ID"] == event_id:
+                    delete(s["ID"])
                     return check_frag
 
         check_frag = False
@@ -166,7 +178,7 @@ def schedule2list(user_id, schedules):
                         "text": (
                             f"{start_dt.month}/{start_dt.day} "
                             f"{start_dt.hour}:{start_dt.minute:02} ~ {end_dt.hour}:{end_dt.minute:02}"
-                        )
+                        ),
                     },
                     "value": schedule["ID"],
                 }
