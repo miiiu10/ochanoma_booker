@@ -123,7 +123,8 @@ def handle_add_callback(ack, body, client, context):
     )
 
     if err:
-        result_view = view_modal(title="エラー", text=str(err), callback_id=None)
+        result_view = view_modal(title="エラー", text=f"\n:warning: {err}", callback_id=None)
+        ack(response_action="update", view=result_view)
     else:
         start_time = datetime.datetime.fromisoformat(calendar_result["start"]["dateTime"])
         end_time = datetime.datetime.fromisoformat(calendar_result["end"]["dateTime"])
@@ -135,17 +136,20 @@ def handle_add_callback(ack, body, client, context):
             reminder_date_time = start_time - datetime.timedelta(minutes=int(reminder_minutes))
             reminder_result, err = send_schedule_message(
                 date_time=reminder_date_time,
-                text=f"<@{body['user']['username']}>さんは {date_time_str} に621の会議室を予約しています。\n忘れないようにしてくださいね！",
+                text=f"<@{body['user']['username']}>さんは {date_time_str} に621の会議室を予約しています。忘れないようにしてくださいね！",
                 client=client,
                 channel=metadata_dict["user_id"],   # https://api.slack.com/methods/chat.scheduleMessage#channels__post-to-a-dm
             )
             if err:
-                modal_message += f"\n:negative_squared_cross_mark: {err}"
+                modal_message += f"\n:warning: {err}"
             else:
                 reminder_date_time_str = (
                     f"{reminder_date_time.date()} {str(reminder_date_time.time())[:5]}"
                 )
                 modal_message += f"\n:white_check_mark: {reminder_date_time_str} になったらOchanomaBookerの「メッセージ」タブでリマインドします。"
+
+        result_view = view_modal(title="予約の追加", text=modal_message, callback_id=None)
+        ack(response_action="update", view=result_view)
 
         client.chat_postMessage(
             channel=os.getenv("CHANNEL_ID"),
@@ -168,9 +172,6 @@ def handle_add_callback(ack, body, client, context):
                 }
             ],
         )
-        result_view = view_modal(title="予約の追加", text=modal_message, callback_id=None)
-
-    ack(response_action="update", view=result_view)
 
 
 @app.action("delete_botton")

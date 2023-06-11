@@ -10,7 +10,9 @@ def send_schedule_message(
         # Call the chat.scheduleMessage method using the WebClient
         # https://api.slack.com/methods/chat.scheduleMessage
         result = client.chat_scheduleMessage(
-            channel=channel, text=text, post_at=int(date_time.timestamp())
+            channel=channel,
+            text=text,
+            post_at=int(date_time.timestamp()),
         )
         if result["ok"]:
             return (result, None)

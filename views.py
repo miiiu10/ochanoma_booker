@@ -19,8 +19,8 @@ def view_home(user):
                 "text": {
                     "type": "mrkdwn",
                     "text": (
-                        f"<@{user}>さん、ここでお茶の間の予約をしてみましょう :tada:\n"
-                        f"使い方は<{scrap_box_url}|*Scrapbox*>を参考にしてくださいね :green_book:\n"
+                        f"<@{user}>さん、ここでお茶の間の予約をしてみよう :tada:\n"
+                        f"使い方は<{scrap_box_url}|*Scrapbox*>を参考にしてね :green_book:\n"
                     ),
                 },
             },
@@ -65,7 +65,7 @@ def view_home(user):
             },
             {
                 "type": "section",
-                "text": {"type": "plain_text", "text": "※ 分刻みの場合は直接入力する事ができるよ！"},
+                "text": {"type": "plain_text", "text": "※ 分刻みの場合は直接入力してね :keyboard:"},
             },
             {
                 "type": "input",
@@ -105,7 +105,7 @@ def view_home(user):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"予約状況は<{google_calendar_url}|*Google Calendar*>からでも確認できます :eyes:\n",
+                    "text": " ",
                 },
             },
             {
@@ -133,6 +133,13 @@ def view_home(user):
                     "text": {"type": "plain_text", "text": "確認・削除"},
                     "value": "home_delete",
                     "action_id": "delete_home",
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"予約状況は<{google_calendar_url}|*Google Calendar*>からも確認できるよ :eyes:\n",
                 },
             },
         ],
