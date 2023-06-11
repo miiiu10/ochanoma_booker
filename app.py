@@ -7,6 +7,7 @@ import logging
 
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from scheduling import send_schedule_message
 
 from views import view_add, view_home, view_check, view_modal, view_cancel
 from modules import (
@@ -75,19 +76,15 @@ def action_button_click(body, ack, say):
 
 
 @app.action("add_home")
-def acction_add_home(ack, body, client, view, logger):
+def action_add_home(ack, body, client, context):
     "Add a reservation by clicking the button in home tab"
     ack()
 
     # Extract information from body
     user_id = body["user"]["id"]
     date = body["view"]["state"]["values"]["dateblock"]["datepick"]["selected_date"]
-    start_time = body["view"]["state"]["values"]["start_time_block"]["timepick"][
-        "selected_time"
-    ]
-    end_time = body["view"]["state"]["values"]["end_time_block"]["timepick"][
-        "selected_time"
-    ]
+    start_time = body["view"]["state"]["values"]["start_time_block"]["timepick"]["selected_time"]
+    end_time = body["view"]["state"]["values"]["end_time_block"]["timepick"]["selected_time"]
     description = body["view"]["state"]["values"]["textblock"]["description"]["value"]
 
     # Validation
@@ -95,11 +92,7 @@ def acction_add_home(ack, body, client, view, logger):
     if err:
         client.views_open(
             trigger_id=body["trigger_id"],
-            view=view_modal(
-                title="エラー",
-                text=response,
-                callback_id=None
-            ),
+            view=view_modal(title="エラー", text=response, callback_id=None),
         )
     else:
         end_time = response
@@ -116,26 +109,43 @@ def acction_add_home(ack, body, client, view, logger):
 
 
 @app.view("add_callback")
-def handle_add_callback(ack, body, client):
+def handle_add_callback(ack, body, client, context):
+    reminder_minutes = body["view"]["state"]["values"]["selected_reminder"]["static_select-action"]["selected_option"]["value"]
     metadata_dict = json.loads(body["view"]["private_metadata"])
 
     # Add a reservation using Google Calendar API
-    result, err = add_reservation(
+    calendar_result, err = add_reservation(
         user_id=metadata_dict["user_id"],
         date=metadata_dict["date"],
         start_time=metadata_dict["start_time"],
         end_time=metadata_dict["end_time"],
         description=metadata_dict["description"],
     )
+
     if err:
         result_view = view_modal(title="エラー", text=str(err), callback_id=None)
     else:
-        start_time = datetime.datetime.fromisoformat(result["start"]["dateTime"])
-        end_time = datetime.datetime.fromisoformat(result["end"]["dateTime"])
-        message = (
-            f"{start_time.date()} {str(start_time.time())[:5]}~{str(end_time.time())[:5]}"
-            "に621の会議室を予約しました"
-        )
+        start_time = datetime.datetime.fromisoformat(calendar_result["start"]["dateTime"])
+        end_time = datetime.datetime.fromisoformat(calendar_result["end"]["dateTime"])
+        date_time_str = f"{start_time.date()} {str(start_time.time())[:5]}~{str(end_time.time())[:5]}"
+
+        modal_message = f":white_check_mark: {date_time_str} に621の会議室を予約しました。"
+
+        if reminder_minutes:
+            reminder_date_time = start_time - datetime.timedelta(minutes=int(reminder_minutes))
+            reminder_result, err = send_schedule_message(
+                date_time=reminder_date_time,
+                text=f"<@{body['user']['username']}>さんは {date_time_str} に621の会議室を予約しています。\n忘れないようにしてくださいね！",
+                client=client,
+                channel=metadata_dict["user_id"],   # https://api.slack.com/methods/chat.scheduleMessage#channels__post-to-a-dm
+            )
+            if err:
+                modal_message += f"\n:negative_squared_cross_mark: {err}"
+            else:
+                reminder_date_time_str = (
+                    f"{reminder_date_time.date()} {str(reminder_date_time.time())[:5]}"
+                )
+                modal_message += f"\n:white_check_mark: {reminder_date_time_str} になったらOchanomaBookerの「メッセージ」タブでリマインドします。"
 
         client.chat_postMessage(
             channel=os.getenv("CHANNEL_ID"),
@@ -144,8 +154,12 @@ def handle_add_callback(ack, body, client):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"<@{body['user']['username']}>が" + message,
-                    },  # ここを変える時はaction_button_clickも変更
+                        "text": (
+                            f"<@{body['user']['username']}>が"
+                            f"{date_time_str}"
+                            "に621の会議室を予約しました"
+                        ),
+                    },  # ここを変える時はaction_delete_button_clickも変更
                     "accessory": {
                         "type": "button",
                         "text": {"type": "plain_text", "text": "delete"},
@@ -154,17 +168,13 @@ def handle_add_callback(ack, body, client):
                 }
             ],
         )
-        result_view = view_modal(title="予約の追加", text=message, callback_id=None)
+        result_view = view_modal(title="予約の追加", text=modal_message, callback_id=None)
 
-    ack(
-        response_action="update",
-        view=result_view
-    )
+    ack(response_action="update", view=result_view)
 
 
 @app.action("delete_botton")
 def action_delete_button_click(body, ack, say):
-    # Acknowledge the action
     ack()
     click_user = body["user"]["id"]
     chat_user = re.search("<@(.*?)>", body["message"]["text"]).group(1)

@@ -12,16 +12,15 @@ def view_home(user):
         "blocks": [
             {
                 "type": "header",
-                "text": {"type": "plain_text", "text": "お茶の間予約システム :coffee:"},
+                "text": {"type": "plain_text", "text": "お茶の間予約システム :tea:"},
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
                     "text": (
-                        f"<@{user}>さん、ここでお茶の間の予約をしてみよう :tada:\n"
-                        f"予約状況は<{google_calendar_url}|*ここ*>から見てね :eyes:\n"
-                        f"使い方は<{scrap_box_url}|*Scrapbox*>を参考にしてね :green_book:\n"
+                        f"<@{user}>さん、ここでお茶の間の予約をしてみましょう :tada:\n"
+                        f"使い方は<{scrap_box_url}|*Scrapbox*>を参考にしてくださいね :green_book:\n"
                     ),
                 },
             },
@@ -106,7 +105,7 @@ def view_home(user):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": " ",
+                    "text": f"予約状況は<{google_calendar_url}|*Google Calendar*>からでも確認できます :eyes:\n",
                 },
             },
             {
@@ -274,7 +273,7 @@ def view_add(user_id, date, start_time, end_time, description):
                     "type": "static_select",
                     "options": reminder_list,
                     "initial_option": reminder_list[0],
-                    # "action_id": "static_select-action",
+                    "action_id": "static_select-action",
                 },
                 "label": {
                     "type": "plain_text",
@@ -332,7 +331,6 @@ def view_modal(title: str, text: str, callback_id: Optional[str]) -> dict[str, A
     }
     if callback_id:
         view["callback_id"] = callback_id
-    print("###########", view)
     return view
 
 
