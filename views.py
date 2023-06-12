@@ -19,8 +19,8 @@ def view_home(user):
                 "text": {
                     "type": "mrkdwn",
                     "text": (
-                        f"<@{user}>さん、ここでお茶の間の予約をしてみよう :tada:\n"
-                        f"使い方は<{scrap_box_url}|*Scrapbox*>を参考にしてね :green_book:\n"
+                        f"<@{user}>さん、ここでお茶の間の予約をしてみましょう :tada:\n"
+                        f"使い方は<{scrap_box_url}|*Scrapbox*>を参考にしてください :green_book:\n"
                     ),
                 },
             },
@@ -65,7 +65,7 @@ def view_home(user):
             },
             {
                 "type": "section",
-                "text": {"type": "plain_text", "text": "※ 分刻みの場合は直接入力してね :keyboard:"},
+                "text": {"type": "plain_text", "text": "※ 分刻みの場合は直接入力してください :keyboard:"},
             },
             {
                 "type": "input",
@@ -139,7 +139,7 @@ def view_home(user):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"予約状況は<{google_calendar_url}|*Google Calendar*>からも確認できるよ :eyes:\n",
+                    "text": f"予約状況は<{google_calendar_url}|*Google Calendar*>からも確認できます :eyes:\n",
                 },
             },
         ],
@@ -161,6 +161,30 @@ def view_schedule(text):
             {"type": "section", "text": {"type": "mrkdwn", "text": text}},
         ],
     }
+    return view
+
+
+def view_check_reminder(sceduled_messgae_list, user_id):
+    blocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"<@{user_id}>さんが作成したリマインダーの一覧です。"
+            },
+        },
+    ]
+
+    for sm in sceduled_messgae_list:
+        blocks.append({"type": "divider"})
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": sm}})
+
+    view = {
+        "type": "modal",
+        "title": {"type": "plain_text", "text": "リマインダーの確認"},
+        "blocks": blocks,
+    }
+
     return view
 
 

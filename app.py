@@ -7,9 +7,9 @@ import logging
 
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-from scheduling import send_schedule_message
+from scheduling import list_scheduled_messages, send_schedule_message
 
-from views import view_add, view_home, view_check, view_modal, view_cancel
+from views import view_add, view_check_reminder, view_home, view_check, view_modal, view_cancel
 from modules import (
     add_reservation,
     schedule2txt,
@@ -50,29 +50,121 @@ def update_home_tab(client, event, logger):
         logger.error(f"Error publishing home tab: {e}")
 
 
-@app.message("hello")
-def message_hello(message, say):
-    "Listen to incoming messages that contain 'hello'"
-    say(
-        blocks=[
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": f"Hey there <@{message['user']}>!"},
-                "accessory": {
-                    "type": "button",
-                    "text": {"type": "plain_text", "text": "Click Me"},
-                    "action_id": "button_click",
+# @app.message("hello")
+# def message_hello(message, say, ack):
+#     "Listen to incoming messages that contain 'hello'"
+#     if message["channel_type"] == "im":
+#         say(
+#             # blocks=[
+#             #     {
+#             #         "type": "section",
+#             #         "text": {"type": "mrkdwn", "text": f"Hey there <@{message['user']}>!"},
+#             #         "accessory": {
+#             #             "type": "button",
+#             #             "text": {"type": "plain_text", "text": "Click Me"},
+#             #             "action_id": "button_click",
+#             #         },
+#             #     }
+#             # ],
+#             text=f"Hey there <@{message['user']}>!",
+#         )
+#     else:
+#         ack()
+
+
+@app.event("message")
+def open_menu(say, message, ack, context):
+    "Show the menu when menshioned in DM"
+    if message["channel_type"] == "im":
+        # mentioned = context['bot_user_id'] in message['text']
+        say(
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": f"<@{message['user']}>さん、こんにちは！\n:alarm_clock:リマインダー機能に関して何かお困りですか？"},
                 },
-            }
-        ],
-        text=f"Hey there <@{message['user']}>!",
+                {"type": "divider"},
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": ":calendar:「新しいリマインダーを追加したい」なら..."},
+                    "accessory": {
+                        "type": "button",
+                        "style": "primary",
+                        "text": {"type": "plain_text", "text": "追加"},
+                        "action_id": "reminder_add",
+                    },
+                },
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": ":eyes:「リマインダーの一覧を確認したい」なら..."},
+                    "accessory": {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "確認"},
+                        "action_id": "reminder_check",
+                    },
+                },
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": ":wastebasket:「作成したリマインダーを削除したい」なら..."},
+                    "accessory": {
+                        "type": "button",
+                        "style": "danger",
+                        "text": {"type": "plain_text", "text": "削除"},
+                        "action_id": "reminder_delete",
+                    },
+                },
+                {"type": "divider"},
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "他に分からないことがあれば、何でも管理者に聞いてください！"},
+                },
+            ],
+            text=f"<@{message['user']}>さん、こんにちは！\n何かお困りですか？",
+        )
+    else:
+        ack()
+
+
+@app.action("reminder_add")
+def action_add_reminder(ack, body, client):
+    ack()
+    client.views_open(
+        trigger_id=body["trigger_id"], view=view_modal(title="リマインダーの追加", text="test", callback_id=None)
     )
 
 
-@app.action("button_click")
-def action_button_click(body, ack, say):
-    ack()  # Acknowledge the action
-    say(f"<@{body['user']['id']}> clicked the button")
+@app.action("reminder_check")
+def action_check_reminder(ack, body, client):
+    ack()
+    result, err = list_scheduled_messages(client=client)
+    if err:
+        result_view = view_modal(title="リマインダーの確認", text=str(err), callback_id=None)
+    else:
+        if len(result) == 0:
+            result_view = view_modal(title="リマインダーの確認", text=f"<@{body['user']['id']}>さんが作成したリマインダーはありません。", callback_id=None)
+        else:
+            print(body["user"])
+            scheduled_message_list = []
+            for scheduled_message in result:
+                post_time_dt = datetime.datetime.fromtimestamp(scheduled_message["post_at"])
+                created_time_dt = datetime.datetime.fromtimestamp(scheduled_message["date_created"])
+                scheduled_message_list.append(
+                    (
+                        f"リマインド日時: {post_time_dt.date()} {str(post_time_dt.time())[:5]}\n"
+                        f"作成日時: {created_time_dt.date()} {str(created_time_dt.time())[:5]}\n"
+                        f"メッセージ: {scheduled_message['text']}"
+                    )
+                )
+            result_view = view_check_reminder(sceduled_messgae_list=scheduled_message_list, user_id=body['user']['id'])
+    client.views_open(trigger_id=body["trigger_id"], view=result_view)
+
+
+@app.action("reminder_delete")
+def action_delete_reminder(ack, body, client):
+    ack()
+    client.views_open(
+        trigger_id=body["trigger_id"], view=view_modal(title="リマインダーの削除", text="test", callback_id=None)
+    )
 
 
 @app.action("add_home")
@@ -136,7 +228,7 @@ def handle_add_callback(ack, body, client, context):
             reminder_date_time = start_time - datetime.timedelta(minutes=int(reminder_minutes))
             reminder_result, err = send_schedule_message(
                 date_time=reminder_date_time,
-                text=f"<@{body['user']['username']}>さんは {date_time_str} に621の会議室を予約しています。忘れないようにしてくださいね！",
+                text=f"<@{body['user']['username']}>さんは {date_time_str} に621の会議室を予約しています。忘れないようにしてください！",
                 client=client,
                 channel=metadata_dict["user_id"],   # https://api.slack.com/methods/chat.scheduleMessage#channels__post-to-a-dm
             )
