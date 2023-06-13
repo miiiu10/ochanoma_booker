@@ -1,8 +1,8 @@
 import json
-from typing import Any, Optional
+from typing import Any, Optional, List
 
 
-def view_home(user):
+def view_home(user_id: str) -> dict[str, Any]:
     google_calendar_url = "https://calendar.google.com/calendar/u/0?cid=Y19uNzNwbGVzZWtxYXRzanU2aDFjcTFibjJhc0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t"  # noqa: E501
     scrap_box_url = (
         "https://scrapbox.io/iiclab/OchanomaBooker%E3%81%AE%E4%BD%BF%E3%81%84%E6%96%B9"
@@ -19,7 +19,7 @@ def view_home(user):
                 "text": {
                     "type": "mrkdwn",
                     "text": (
-                        f"<@{user}>さん、ここでお茶の間の予約をしてみましょう :tada:\n"
+                        f"<@{user_id}>さん、ここでお茶の間の予約をしてみましょう :tada:\n"
                         f"使い方は<{scrap_box_url}|*Scrapbox*>を参考にしてください :green_book:\n"
                     ),
                 },
@@ -65,7 +65,10 @@ def view_home(user):
             },
             {
                 "type": "section",
-                "text": {"type": "plain_text", "text": "※ 分刻みの場合は直接入力してください :keyboard:"},
+                "text": {
+                    "type": "plain_text",
+                    "text": "※ 分刻みの場合は直接入力してください :keyboard:",
+                },
             },
             {
                 "type": "input",
@@ -147,7 +150,7 @@ def view_home(user):
     return view
 
 
-def view_schedule(text):
+def view_schedule(text) -> dict[str, Any]:
     view = {
         "type": "modal",
         "callback_id": "view_before",
@@ -164,14 +167,69 @@ def view_schedule(text):
     return view
 
 
-def view_check_reminder(sceduled_messgae_list, user_id):
+def view_add_reminder(user_id: str) -> dict[str, Any]:
+    view = {
+        "type": "modal",
+        "callback_id": "view_reminder_add",
+        "title": {"type": "plain_text", "text": "リマインダーの追加"},
+        "submit": {"type": "plain_text", "text": "確定"},
+        "close": {"type": "plain_text", "text": "キャンセル"},
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"<@{user_id}>さん、リマインダーを作成してみましょう！\n日付と時間を選択して *確定* ボタンを押してください。",
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "input",
+                "element": {
+                    "type": "datepicker",
+                    "placeholder": {
+                        "type": "plain_text",
+                        "text": "Select a date",
+                        "emoji": True,
+                    },
+                    "action_id": "datepicker-action",
+                },
+                "label": {"type": "plain_text", "text": "日付 /Date", "emoji": True},
+                "block_id": "date",
+            },
+            {
+                "type": "input",
+                "element": {
+                    "type": "timepicker",
+                    "placeholder": {
+                        "type": "plain_text",
+                        "text": "Select time",
+                        "emoji": True,
+                    },
+                    "action_id": "timepicker-action",
+                },
+                "label": {"type": "plain_text", "text": "時間 /Time", "emoji": True},
+                "block_id": "time",
+            },
+            {
+                "type": "input",
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "plain_text_input-action",
+                },
+                "label": {"type": "plain_text", "text": "内容 /Content", "emoji": True},
+                "block_id": "text",
+            },
+        ],
+    }
+    return view
+
+
+def view_check_reminder(sceduled_messgae_list, user_id) -> dict[str, Any]:
     blocks = [
         {
             "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"<@{user_id}>さんが作成したリマインダーの一覧です。"
-            },
+            "text": {"type": "mrkdwn", "text": f"<@{user_id}>さんが作成したリマインダーの一覧です。"},
         },
     ]
 
@@ -188,7 +246,45 @@ def view_check_reminder(sceduled_messgae_list, user_id):
     return view
 
 
-def view_check(calendar_info):
+def view_delete_reminder(
+    scheduled_message_list: List[Any], user_id: str
+) -> dict[str, Any]:
+    view = {
+        "type": "modal",
+        "title": {"type": "plain_text", "text": "リマインダーの削除"},
+        "callback_id": "view_reminder_delete",
+        "submit": {"type": "plain_text", "text": "削除"},
+        "blocks": [
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": (
+                        f"<@{user_id}>さんのリマインダーのみが表示されます。\n削除する場合は、1つ選択して *削除* ボタンを押してください。"
+                    ),
+                },
+            },
+            {
+                "type": "input",
+                "block_id": "selected_reminder",
+                "element": {
+                    "type": "static_select",
+                    "options": scheduled_message_list,
+                    "action_id": "static_select-action",
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": " ",
+                },
+            },
+        ],
+    }
+
+    return view
+
+
+def view_check(calendar_info: List[Any]) -> dict[str, Any]:
     blocks = [
         {
             "type": "section",
@@ -217,7 +313,7 @@ def view_check(calendar_info):
     return view
 
 
-def view_cancel(user_id, user_schedule_list):
+def view_cancel(user_id: str, user_schedule_list: List[Any]) -> dict[str, Any]:
     if len(user_schedule_list) == 0:
         return {
             "type": "modal",
@@ -267,7 +363,9 @@ def view_cancel(user_id, user_schedule_list):
     return view
 
 
-def view_add(user_id, date, start_time, end_time, description):
+def view_add(
+    user_id: str, date: str, start_time: str, end_time: str, description: str
+) -> dict[str, Any]:
     reminder_dict = {
         "なし": None,
         "開始時": 0,
@@ -312,18 +410,20 @@ def view_add(user_id, date, start_time, end_time, description):
                 },
             },
         ],
-        "private_metadata": json.dumps({
-            "user_id": user_id,
-            "date": date,
-            "start_time": start_time,
-            "end_time": end_time,
-            "description": description,
-        }),
+        "private_metadata": json.dumps(
+            {
+                "user_id": user_id,
+                "date": date,
+                "start_time": start_time,
+                "end_time": end_time,
+                "description": description,
+            }
+        ),
     }
     return view
 
 
-def view_duplicate(user):
+def view_duplicate(user: str) -> dict[str, Any]:
     view = {
         "type": "modal",
         "close": {"type": "plain_text", "text": "Close", "emoji": True},
@@ -345,7 +445,7 @@ def view_duplicate(user):
 
 
 def view_modal(title: str, text: str, callback_id: Optional[str]) -> dict[str, Any]:
-    "Create a modal view by specifying title and text"
+    "Create a modal view by specifying title, text and callback_id"
     view = {
         "type": "modal",
         "close": {"type": "plain_text", "text": "閉じる", "emoji": True},
@@ -362,22 +462,4 @@ def view_modal(title: str, text: str, callback_id: Optional[str]) -> dict[str, A
     }
     if callback_id:
         view["callback_id"] = callback_id
-    return view
-
-
-def view_delete_fail(user):
-    view = {
-        "type": "modal",
-        "close": {"type": "plain_text", "text": "Close", "emoji": True},
-        "title": {"type": "plain_text", "text": "予定が削除できませんでした。", "emoji": True},
-        "blocks": [
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f":wave: Hey <@{user}>!\n\nSorry, reservation could not be deleted for some reason...",
-                },
-            }
-        ],
-    }
     return view
