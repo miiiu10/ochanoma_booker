@@ -194,8 +194,8 @@ def action_dm_delete_reminder(ack: Ack, body: Dict[str, Any], client: WebClient)
                         scheduled_message["post_at"]
                     )
                     option_text = (
-                        f"リマインド日時: {post_time_dt.date()} {str(post_time_dt.time())[:5]}\n"
-                        f"メッセージ: {scheduled_message['text']}"
+                        f"【{post_time_dt.date()} {str(post_time_dt.time())[:5]}】"
+                        f" {scheduled_message['text']}"
                     )
                     if len(option_text) >= 76:  # must be less than 76 characters
                         option_text = option_text[:74] + "…"
@@ -325,7 +325,7 @@ def view_home_add_reservation(ack: Ack, body: Dict[str, Any], client: WebClient)
 
         modal_message = f":white_check_mark: {date_time_str} に621の会議室を予約しました。"
 
-        if reminder_minutes:
+        if reminder_minutes != 'None':
             reminder_date_time = start_time - datetime.timedelta(
                 minutes=int(reminder_minutes)
             )
@@ -436,7 +436,7 @@ def view_dm_delete_reminder(ack: Ack, body: Dict[str, Any], client: WebClient):
     if err:
         msg = f"以下のエラーが発生しました。\n{err}\n再度お試しいただくか、管理者までお問い合わせください。"
     else:
-        msg = "予約が正常に取り消されました"
+        msg = "リマインダーが正常に取り消されました"
 
     ack(
         response_action="update",
