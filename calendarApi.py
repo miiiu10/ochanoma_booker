@@ -1,26 +1,15 @@
-from configparser import ConfigParser
-import errno
 import os
-import re
-import json
 import datetime
 from google.auth import load_credentials_from_file
 from googleapiclient.discovery import build
-from calendarData import CalendarData
-
 
 
 class CalendarApi():
     def __init__(self):
-        config = ConfigParser()
-        config_path = './bolt_config.ini'
-        if not os.path.exists(config_path):
-            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), config_path)
-        config.read(config_path)
-        self.__calendarId = config["CALENDAR"]["id"]
+        self.__calendarId = os.getenv("CALENDAR_ID")
 
-        SCOPES = [config["CALENDAR"]["scopes"]]
-        gapi_creds = load_credentials_from_file('json/google_calendar_key.json', SCOPES)[0]
+        SCOPES = [os.getenv("CALENDAR_SCOPES")]
+        gapi_creds = load_credentials_from_file('google_calendar_key.json', SCOPES)[0]
         self.__service = build('calendar', 'v3', credentials=gapi_creds)
 
     @property
@@ -52,11 +41,11 @@ class CalendarApi():
         self.__eventId = val
 
     def get(self):
-        results = []
-        now = datetime.datetime.now(datetime.timezone.utc)
+        jst = datetime.timezone(datetime.timedelta(hours=9))
+        now = datetime.datetime.now(jst)
 
         nextWeek = now + datetime.timedelta(days=30)
-        timeMax = datetime.datetime(nextWeek.year, nextWeek.month, nextWeek.day, 23, 59, tzinfo=datetime.timezone.utc)
+        timeMax = datetime.datetime(nextWeek.year, nextWeek.month, nextWeek.day, 23, 59, tzinfo=jst)
 
         events_result = self.service.events().list(
             calendarId=self.calendarId,
@@ -72,8 +61,9 @@ class CalendarApi():
 
     def check_calendar(self, start_time):
         checkDay = start_time
-        timeMin = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 0, 0, tzinfo=datetime.timezone.utc)
-        timeMax = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 23, 59, tzinfo=datetime.timezone.utc)
+        jst = datetime.timezone(datetime.timedelta(hours=9))
+        timeMin = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 0, 0, tzinfo=jst)
+        timeMax = datetime.datetime(checkDay.year, checkDay.month, checkDay.day, 23, 59, tzinfo=jst)
 
         events_result = self.service.events().list(
             calendarId=self.calendarId,
@@ -87,7 +77,8 @@ class CalendarApi():
         return events
 
     def search_from_name(self, name):
-        now = datetime.datetime.now(datetime.timezone.utc)
+        jst = datetime.timezone(datetime.timedelta(hours=9))
+        now = datetime.datetime.now(jst)
 
         events_result = self.service.events().list(
             calendarId=self.calendarId,
